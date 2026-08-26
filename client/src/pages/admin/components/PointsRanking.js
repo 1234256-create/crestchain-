@@ -62,7 +62,8 @@ const PointsRanking = () => {
         })
       ]);
 
-      const list = leaderboardRes.data?.data?.leaderboard || [];
+      const rawList = leaderboardRes.data?.data?.leaderboard || leaderboardRes.data?.data?.users || [];
+      const list = rawList.filter(u => u.role !== 'admin' && u.email !== 'support@veritasaid.com');
       const globalStats = statsRes.data?.data?.stats || {
         totalUsers: 0,
         totalPoints: 0,
@@ -129,12 +130,15 @@ const PointsRanking = () => {
         // Sort by effective total points descending to ensure correct ranking
         data.sort((a, b) => b.totalPoints - a.totalPoints);
 
-        // Assign ranks
-        data = data.map((item, index) => ({
-          ...item,
-          rank: index + 1,
-          previousRank: index + 1
-        }));
+        // Assign ranks starting from 1 (or rankOverride) to match dashboard & leaderboard
+        data = data.map((item, index) => {
+          const r = item.rankOverride !== undefined ? item.rankOverride : (item.rank || (index + 1));
+          return {
+            ...item,
+            rank: r,
+            previousRank: r
+          };
+        });
 
         const topPerformer = data[0] || null;
         setRankings(data);
@@ -564,7 +568,7 @@ const PointsRanking = () => {
                         <span>{user.totalContributions} contributions</span>
                       </div>
                       <div className="text-xs text-gray-400">
-                        Last: {new Date(user.lastActivity).toLocaleDateString()}
+                        Last: {(user.lastActivity && !isNaN(new Date(user.lastActivity).getTime())) ? new Date(user.lastActivity).toLocaleDateString() : '—'}
                       </div>
                     </div>
                   </td>
@@ -698,11 +702,11 @@ const PointsRanking = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Joined:</span>
-                      <span className="font-medium">{new Date(showDetails.joinDate).toLocaleDateString()}</span>
+                      <span className="font-medium">{(showDetails.joinDate && !isNaN(new Date(showDetails.joinDate).getTime())) ? new Date(showDetails.joinDate).toLocaleDateString() : '—'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Last Activity:</span>
-                      <span className="font-medium">{new Date(showDetails.lastActivity).toLocaleDateString()}</span>
+                      <span className="font-medium">{(showDetails.lastActivity && !isNaN(new Date(showDetails.lastActivity).getTime())) ? new Date(showDetails.lastActivity).toLocaleDateString() : '—'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Current Rank:</span>

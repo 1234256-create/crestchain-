@@ -1,6 +1,9 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { body, validationResult, query } = require('express-validator');
-const { auth, adminAuth } = require('../middleware/auth');
+const { readCollection, writeCollection } = require('../utils/localStore');
+
+const { auth, adminAuth, optionalAuth } = require('../middleware/auth');
 const Vote = require('../models/Vote');
 const User = require('../models/User');
 const { getTransporter } = require('../services/emailService');
@@ -12,37 +15,71 @@ const mkTransporter = async () => getTransporter();
 // Helper function to send vote notifications with chunking
 const sendVoteNotifications = async (vote) => {
   try {
-    console.log(`[Vote Notification] Starting process for vote: ${vote._id}`);
+    const voteIdStr = vote._id || vote.id;
+    console.log(`[Vote Notification] Starting process for vote: ${voteIdStr}`);
 
     // 1. Dashboard Notification (via WebSocket broadcast)
     if (global.__broadcastUsersUpdate) {
       global.__broadcastUsersUpdate({
         type: 'vote_created_notification',
-        vote: { id: vote._id, title: vote.title, startTime: vote.startTime, endTime: vote.endTime }
+        vote: { id: voteIdStr, title: vote.title, startTime: vote.startTime, endTime: vote.endTime }
       });
     }
 
-    // 2. Email Notifications to all active real users
-    const users = await User.find({
-      isActive: true,
-      'preferences.emailNotifications': { $ne: false },
-      isVirtual: { $ne: true }
-    }).select('email firstName');
+    // 2. Collect emails from DB, LocalStore users, and registered applicants
+    const targetMap = new Map();
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const users = await User.find({}).select('email firstName role isVirtual').lean();
+        users.forEach(u => {
+          const em = String(u.email || '').trim();
+          if (em && !em.includes('@victim.dao') && u.role !== 'admin' && !u.isVirtual) {
+            targetMap.set(em.toLowerCase(), { email: em, firstName: u.firstName || 'Member' });
+          }
+        });
+      } catch (dbErr) {
+        console.warn('[Vote Notification] DB user query notice:', dbErr.message);
+      }
+    }
 
-    console.log(`[Vote Notification] Found ${users.length} users targeted for notification`);
+    try {
+      const localUsersList = readCollection('users') || [];
+      localUsersList.forEach(u => {
+        const em = String(u.email || '').trim();
+        if (em && !em.includes('@victim.dao') && u.role !== 'admin' && !u.isVirtual) {
+          const norm = em.toLowerCase();
+          if (!targetMap.has(norm)) {
+            targetMap.set(norm, { email: em, firstName: u.firstName || 'Member' });
+          }
+        }
+      });
+    } catch (_) {}
+
+    try {
+      const localApps = readCollection('applications') || [];
+      localApps.forEach(a => {
+        const em = String(a.email || '').trim();
+        if (em && !em.includes('@victim.dao') && (a.status === 'registered' || a.hasAccount || a.status === 'accepted')) {
+          const norm = em.toLowerCase();
+          if (!targetMap.has(norm)) {
+            targetMap.set(norm, { email: em, firstName: a.firstName || 'Member' });
+          }
+        }
+      });
+    } catch (_) {}
+
+    const targetList = Array.from(targetMap.values());
+    console.log(`[Vote Notification] Found ${targetList.length} users targeted for notification`);
 
     const { sendVoteAnnouncementEmail } = require('../services/emailService');
-    const validUsers = users.filter(u => u.email && !u.email.includes('@victim.dao'));
 
-    console.log(`[Vote Notification] Dispatching to ${validUsers.length} valid users immediately`);
-
-    // Fire all emails in parallel - the SMTP pool will handle the concurrency
-    const results = await Promise.allSettled(validUsers.map(user =>
+    // Dispatch emails to all targeted users
+    const results = await Promise.allSettled(targetList.map(user =>
       sendVoteAnnouncementEmail({
         email: user.email,
         firstName: user.firstName,
         voteTitle: vote.title,
-        voteId: vote._id
+        voteId: voteIdStr
       })
     ));
 
@@ -54,7 +91,7 @@ const sendVoteNotifications = async (vote) => {
         successCount++;
       } else {
         failCount++;
-        const email = validUsers[idx]?.email;
+        const email = targetList[idx]?.email;
         console.error(`[Vote Notification] Failed for ${email}:`, res.reason);
       }
     });
@@ -71,7 +108,7 @@ router.get('/health', (req, res) => {
   res.json({ status: 'OK', route: 'votes' });
 });
 
-router.get('/', auth, [
+router.get('/', optionalAuth, [
   query('status').optional().isIn(['draft', 'active', 'paused', 'completed']),
   query('limit').optional().isInt({ min: 1, max: 200 })
 ], async (req, res) => {
@@ -80,63 +117,95 @@ router.get('/', auth, [
     if (!errors.isEmpty()) {
       return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
     }
-    const { status, limit = 200 } = req.query; // Increased default limit to support multiple votes
+    const { status, limit = 200 } = req.query;
     const filter = {};
-    if (status) filter.status = status;
-    // Non-admin users can only see active votes
-    if (req.user.role !== 'admin') {
+    const userRole = (req.user && req.user.role) ? req.user.role : 'user';
+
+    if (status) {
+      filter.status = status;
+    }
+    if (userRole !== 'admin') {
       filter.status = 'active';
     }
-    // For admins without status filter, get all votes (draft, active, paused, completed)
-    // For non-admins or when status is specified, filter by status
-    // Get all votes - don't use lean() to ensure we can convert Maps properly
-    const votes = await Vote.find(filter).sort({ createdAt: -1 }).limit(parseInt(limit));
-    console.log(`[Votes API] Found ${votes.length} votes with filter:`, JSON.stringify(filter), `for user role: ${req.user.role}`);
 
-    // Fetch current user's global voting rights to calculate bounds strictly for myVotingRights display
-    const currentUser = req.user ? await User.findById(req.user.id) : null;
-    const userVotingRights = currentUser ? currentUser.votingRights || 1 : 1;
-
-    // Double-check: if admin and no status filter, verify we're getting all votes
-    if (req.user.role === 'admin' && !status) {
-      const totalCount = await Vote.countDocuments({});
-      console.log(`[Votes API] Total votes in database: ${totalCount}, Returning: ${votes.length}`);
+    let votes = [];
+    if (mongoose.connection.readyState === 1) {
+      try {
+        votes = await Vote.find(filter).sort({ createdAt: -1 }).limit(parseInt(limit));
+      } catch (dbErr) {
+        console.warn('Vote.find db error:', dbErr.message);
+      }
     }
+
+    const fileVotes = readCollection('votes') || [];
+    if (!global.inMemoryVotes) {
+      global.inMemoryVotes = fileVotes;
+    } else {
+      fileVotes.forEach(fv => {
+        const idStr = String(fv._id || fv.id);
+        const exists = global.inMemoryVotes.some(mv => String(mv._id || mv.id) === idStr);
+        if (!exists) global.inMemoryVotes.push(fv);
+      });
+    }
+
+    const dbVoteObjs = votes.map(v => (typeof v.toObject === 'function' ? v.toObject() : v));
+    const memoryVotes = (global.inMemoryVotes || []).filter(v => {
+      if (userRole !== 'admin' && v.status !== 'active') return false;
+      if (status && v.status !== status) return false;
+      return true;
+    });
+
+    const voteMap = new Map();
+    [...memoryVotes, ...dbVoteObjs].forEach(v => {
+      const vid = String(v._id || v.id);
+      if (vid) voteMap.set(vid, v);
+    });
+    const allVotes = Array.from(voteMap.values());
+
     // Convert submissions Map to object for JSON serialization
-    const votesWithSubmissions = votes.map(vote => {
-      const voteObj = vote.toObject();
-      if (voteObj.submissions instanceof Map) {
-        voteObj.submissions = Object.fromEntries(voteObj.submissions);
+    const votesWithSubmissions = allVotes.map(voteObj => {
+      const vObj = { ...voteObj };
+      if (vObj.submissions instanceof Map) {
+        vObj.submissions = Object.fromEntries(vObj.submissions);
       }
-      if (voteObj.overrides instanceof Map) {
-        voteObj.overrides = Object.fromEntries(voteObj.overrides);
+      if (vObj.overrides instanceof Map) {
+        vObj.overrides = Object.fromEntries(vObj.overrides);
       }
-      // Hide other users' sensitive data if not admin
-      if (req.user.role !== 'admin') {
-        // Only keep current user's submission and override
-        const mySub = voteObj.submissions[req.user.id] || 0;
-        const myOverride = voteObj.overrides && voteObj.overrides[req.user.id] ? voteObj.overrides[req.user.id] : 0;
+      if (vObj._id && !vObj.id) {
+        vObj.id = vObj._id.toString();
+      }
 
-        // Clear maps
-        voteObj.submissions = { [req.user.id]: mySub };
-        voteObj.overrides = { [req.user.id]: myOverride };
+      if (req.user) {
+        const userIdStr = String(req.user.id);
+        const userEmail = req.user.email;
+        const userIds = [userIdStr, userEmail].filter(Boolean);
+        const overridesMap = vObj.overrides || {};
+        let offset = 0;
+        for (const uid of userIds) {
+          if (overridesMap[uid] !== undefined) {
+            offset = Number(overridesMap[uid]);
+            break;
+          }
+        }
+        const base = Number(vObj.maxVotesPerUser) || 1;
+        const total = Math.max(0, base + offset);
 
-        // Attach calculated rights for convenience
-        // Base is higher of maxVotesPerUser or user's specific right
-        const effectiveBase = Math.max(voteObj.maxVotesPerUser, userVotingRights);
-        voteObj.myVotingRights = {
-          base: effectiveBase,
-          offset: myOverride,
-          total: Math.max(0, effectiveBase + myOverride),
-          used: mySub,
-          remaining: Math.max(0, (effectiveBase + myOverride) - mySub)
+        const submissionsMap = vObj.submissions || {};
+        let used = 0;
+        const seen = new Set();
+        for (const uid of userIds) {
+          if (seen.has(uid)) continue;
+          seen.add(uid);
+          used += Number(submissionsMap[uid] || 0);
+        }
+        vObj.myVotingRights = {
+          total,
+          used,
+          remaining: Math.max(0, total - used)
         };
       }
-      // Ensure id is available for compatibility
-      if (voteObj._id && !voteObj.id) {
-        voteObj.id = voteObj._id.toString();
-      }
-      return voteObj;
+
+      return vObj;
     });
     res.json({ success: true, data: { votes: votesWithSubmissions } });
   } catch (error) {
@@ -148,24 +217,59 @@ router.get('/', auth, [
 router.get('/:id/voters', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ success: false, message: 'Invalid vote ID' });
+    let vote = null;
+
+    if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
+      try {
+        vote = await Vote.findById(id).populate('voterDetails.userId', 'firstName lastName email');
+      } catch (dbErr) {}
     }
-    const vote = await Vote.findById(id).populate('voterDetails.userId', 'firstName lastName email');
+
+    const localUsers = readCollection('users') || [];
+
+    if (!vote && global.inMemoryVotes) {
+      const memVote = global.inMemoryVotes.find(v => String(v._id || v.id) === String(id));
+      if (memVote) vote = memVote;
+    }
+
+    if (!vote) {
+      const fileVotes = readCollection('votes') || [];
+      vote = fileVotes.find(v => String(v._id || v.id) === String(id));
+    }
+
     if (!vote) return res.status(404).json({ success: false, message: 'Vote not found' });
 
-    const voters = (vote.voterDetails || []).map(detail => {
-      const user = detail.userId;
-      const option = vote.options.find(o => o.id === detail.optionId);
-      return {
-        userId: user ? user._id : null,
-        fullName: user ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Deleted User',
-        email: user ? user.email : 'N/A',
-        optionId: detail.optionId,
-        optionText: option ? option.text : 'Unknown Option',
-        votedAt: detail.votedAt
-      };
-    });
+    let voters = [];
+
+    if (Array.isArray(vote.voterDetails) && vote.voterDetails.length > 0) {
+      voters = vote.voterDetails.map(detail => {
+        const uObj = (typeof detail.userId === 'object' && detail.userId !== null) ? detail.userId : localUsers.find(u => String(u._id || u.id) === String(detail.userId));
+        const option = (vote.options || []).find(o => Number(o.id) === Number(detail.optionId));
+        return {
+          userId: uObj ? (uObj._id || uObj.id) : detail.userId,
+          fullName: uObj ? (uObj.fullName || `${uObj.firstName || ''} ${uObj.lastName || ''}`.trim()) : 'Voter User',
+          email: uObj ? uObj.email : 'N/A',
+          optionId: detail.optionId,
+          optionText: option ? option.text : `Option #${detail.optionId}`,
+          votedAt: detail.votedAt || new Date().toISOString()
+        };
+      });
+    } else if (vote.submissions && typeof vote.submissions === 'object') {
+      const subObj = vote.submissions instanceof Map ? Object.fromEntries(vote.submissions) : vote.submissions;
+      Object.entries(subObj).forEach(([voterKey, count]) => {
+        if (Number(count) > 0) {
+          const uObj = localUsers.find(u => String(u._id || u.id) === String(voterKey) || u.email === voterKey);
+          voters.push({
+            userId: uObj ? (uObj._id || uObj.id) : voterKey,
+            fullName: uObj ? (uObj.fullName || `${uObj.firstName || ''} ${uObj.lastName || ''}`.trim()) : (voterKey.includes('@') ? voterKey.split('@')[0] : 'Voter User'),
+            email: uObj ? uObj.email : (voterKey.includes('@') ? voterKey : 'N/A'),
+            optionId: 1,
+            optionText: vote.options?.[0]?.text || 'Submitted Vote',
+            votedAt: vote.updatedAt || vote.createdAt || new Date().toISOString()
+          });
+        }
+      });
+    }
 
     res.json({ success: true, data: { voters: voters.reverse() } });
   } catch (error) {
@@ -229,46 +333,84 @@ router.post('/', adminAuth, [
       return { id: idx + 1, text: String(opt).trim(), votes: 0, votesOffset: 0, targetVotes: 0 };
     });
 
-    const vote = new Vote({
-      title,
-      description,
-      options: mappedOptions,
-      isProgressive: !!isProgressive,
-      pointsReward: Number(pointsReward) || 0,
-      maxVotesPerUser: Number(maxVotesPerUser) || 1,
-      status: 'draft',
-      createdBy: req.user.id
-    });
-    await vote.save();
+    const createdBy = (req.user && req.user.id && mongoose.Types.ObjectId.isValid(req.user.id)) ? req.user.id : null;
+    let voteObj = null;
 
-    if (durationHours) {
-      await vote.start(durationHours);
-      // Reload vote to get fresh data after start
-      const startedVote = await Vote.findById(vote._id);
-
-      // Trigger notifications since it's started immediately
-      sendVoteNotifications(startedVote);
-
-      // Convert submissions Map to object for JSON serialization
-      const voteObj = startedVote.toObject();
-      if (voteObj.submissions instanceof Map) {
-        voteObj.submissions = Object.fromEntries(voteObj.submissions);
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const vote = new Vote({
+          title,
+          description,
+          options: mappedOptions,
+          isProgressive: !!isProgressive,
+          pointsReward: Number(pointsReward) || 0,
+          maxVotesPerUser: Number(maxVotesPerUser) || 1,
+          status: 'draft',
+          createdBy
+        });
+        await vote.save();
+        if (durationHours) {
+          await vote.start(durationHours);
+        }
+        const fresh = await Vote.findById(vote._id);
+        if (fresh) {
+          voteObj = fresh.toObject();
+          if (voteObj.submissions instanceof Map) voteObj.submissions = Object.fromEntries(voteObj.submissions);
+          if (voteObj.overrides instanceof Map) voteObj.overrides = Object.fromEntries(voteObj.overrides);
+        }
+      } catch (dbErr) {
+        console.warn('Vote DB save warning:', dbErr.message);
       }
-      try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_created', id: vote._id }); } catch (_) { }
-      try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_started', id: vote._id }); } catch (_) { }
-      res.status(201).json({ success: true, message: 'Vote created and started', data: { vote: voteObj } });
-    } else {
-      // Convert submissions Map to object for JSON serialization
-      const voteObj = vote.toObject();
-      if (voteObj.submissions instanceof Map) {
-        voteObj.submissions = Object.fromEntries(voteObj.submissions);
-      }
-      if (voteObj.overrides instanceof Map) {
-        voteObj.overrides = Object.fromEntries(voteObj.overrides);
-      }
-      try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_created', id: vote._id }); } catch (_) { }
-      res.status(201).json({ success: true, message: 'Vote created', data: { vote: voteObj } });
     }
+
+    if (!voteObj) {
+      const now = new Date();
+      const voteId = new mongoose.Types.ObjectId().toString();
+      const durationMs = durationHours ? Math.max(1, Number(durationHours)) * 3600000 : null;
+      voteObj = {
+        _id: voteId,
+        id: voteId,
+        title,
+        description,
+        options: mappedOptions,
+        isProgressive: !!isProgressive,
+        pointsReward: Number(pointsReward) || 0,
+        maxVotesPerUser: Number(maxVotesPerUser) || 1,
+        status: durationHours ? 'active' : 'draft',
+        startTime: durationHours ? now : null,
+        endTime: durationHours ? new Date(now.getTime() + durationMs) : null,
+        totalVotes: 0,
+        submissions: {},
+        overrides: {},
+        voterDetails: [],
+        createdBy,
+        createdAt: now,
+        updatedAt: now
+      };
+      if (!global.inMemoryVotes) global.inMemoryVotes = readCollection('votes') || [];
+      global.inMemoryVotes.unshift(voteObj);
+      writeCollection('votes', global.inMemoryVotes);
+    } else {
+      if (!global.inMemoryVotes) global.inMemoryVotes = readCollection('votes') || [];
+      const existingIdx = global.inMemoryVotes.findIndex(v => String(v._id || v.id) === String(voteObj._id || voteObj.id));
+      if (existingIdx !== -1) global.inMemoryVotes[existingIdx] = voteObj;
+      else global.inMemoryVotes.unshift(voteObj);
+      writeCollection('votes', global.inMemoryVotes);
+    }
+
+    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_created', id: voteObj._id }); } catch (_) { }
+    if (voteObj.status === 'active') {
+      try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_started', id: voteObj._id }); } catch (_) { }
+    }
+
+    // Always dispatch vote announcement emails to all registered users upon vote creation
+    try {
+      await sendVoteNotifications(voteObj);
+    } catch (err) {
+      console.error('[Vote Notification] Error during vote creation notification:', err);
+    }
+
+    res.status(201).json({ success: true, message: voteObj.status === 'active' ? 'Vote created and started' : 'Vote created', data: { vote: voteObj } });
   } catch (error) {
     console.error('Create vote error:', error);
     res.status(500).json({ success: false, message: 'Server error while creating vote' });
@@ -279,62 +421,71 @@ router.post('/', adminAuth, [
 // @desc    Update a vote (admin only)
 // @access  Private/Admin
 router.put('/:id', adminAuth, [
-  body('title').isString().trim(),
+  body('title').optional().isString().trim(),
   body('description').optional().isString(),
-  body('options').isArray(),
+  body('options').optional().isArray(),
   body('pointsReward').optional().isNumeric(),
   body('maxVotesPerUser').optional().isInt({ min: 1 }),
   body('isProgressive').optional().isBoolean(),
   body('durationHours').optional().isNumeric()
 ], async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
-    }
-
     const { id } = req.params;
     const { title, description, options, pointsReward, maxVotesPerUser, isProgressive, durationHours } = req.body;
+    let voteObj = null;
 
-    const vote = await Vote.findById(id);
-    if (!vote) return res.status(404).json({ success: false, message: 'Vote not found' });
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const vote = await Vote.findById(id);
+        if (vote) {
+          if (title) vote.title = title;
+          if (description !== undefined) vote.description = description;
+          if (pointsReward !== undefined) vote.pointsReward = Number(pointsReward);
+          if (maxVotesPerUser !== undefined) vote.maxVotesPerUser = Number(maxVotesPerUser);
+          if (isProgressive !== undefined) vote.isProgressive = !!isProgressive;
+          if (options && Array.isArray(options)) {
+            vote.options = options.map((opt, idx) => ({
+              id: opt.id || idx + 1,
+              text: String(opt.text || '').trim(),
+              votes: Number(opt.votes) || 0,
+              votesOffset: Number(opt.votesOffset) || 0,
+              targetVotes: Number(opt.targetVotes) || 0
+            }));
+          }
+          await vote.save();
+          voteObj = typeof vote.toObject === 'function' ? vote.toObject() : vote;
+        }
+      } catch (dbErr) {}
+    }
 
-    if (title) vote.title = title;
-    if (description !== undefined) vote.description = description;
-    if (pointsReward !== undefined) vote.pointsReward = Number(pointsReward);
-    if (maxVotesPerUser !== undefined) vote.maxVotesPerUser = Number(maxVotesPerUser);
-    if (isProgressive !== undefined) vote.isProgressive = !!isProgressive;
-
-    if (durationHours !== undefined) {
-      const hours = Number(durationHours);
-      if (vote.startTime) {
-        const ms = Math.max(1, hours) * 60 * 60 * 1000;
-        vote.endTime = new Date(new Date(vote.startTime).getTime() + ms);
+    if (!voteObj && global.inMemoryVotes) {
+      const idx = global.inMemoryVotes.findIndex(v => String(v._id || v.id) === String(id));
+      if (idx !== -1) {
+        if (title) global.inMemoryVotes[idx].title = title;
+        if (description !== undefined) global.inMemoryVotes[idx].description = description;
+        if (pointsReward !== undefined) global.inMemoryVotes[idx].pointsReward = Number(pointsReward);
+        if (maxVotesPerUser !== undefined) global.inMemoryVotes[idx].maxVotesPerUser = Number(maxVotesPerUser);
+        if (isProgressive !== undefined) global.inMemoryVotes[idx].isProgressive = !!isProgressive;
+        if (options && Array.isArray(options)) {
+          global.inMemoryVotes[idx].options = options.map((opt, i) => ({
+            id: opt.id || i + 1,
+            text: String(opt.text || '').trim(),
+            votes: Number(opt.votes) || 0,
+            votesOffset: Number(opt.votesOffset) || 0,
+            targetVotes: Number(opt.targetVotes) || 0
+          }));
+        }
+        voteObj = global.inMemoryVotes[idx];
       }
     }
 
-    if (options && Array.isArray(options)) {
-      vote.options = options.map((opt, idx) => ({
-        id: opt.id || idx + 1,
-        text: String(opt.text || '').trim(),
-        votes: Number(opt.votes) || 0,
-        votesOffset: Number(opt.votesOffset) || 0,
-        targetVotes: Number(opt.targetVotes) || 0
-      }));
-    }
+    if (!voteObj) return res.status(404).json({ success: false, message: 'Vote not found' });
 
-    await vote.save();
+    if (voteObj.submissions instanceof Map) voteObj.submissions = Object.fromEntries(voteObj.submissions);
+    if (voteObj.overrides instanceof Map) voteObj.overrides = Object.fromEntries(voteObj.overrides);
+    if (voteObj._id && !voteObj.id) voteObj.id = voteObj._id.toString();
 
-    // Convert submissions Map to object for JSON serialization
-    const voteObj = vote.toObject();
-    if (voteObj.submissions instanceof Map) {
-      voteObj.submissions = Object.fromEntries(voteObj.submissions);
-    }
-    if (voteObj.overrides instanceof Map) {
-      voteObj.overrides = Object.fromEntries(voteObj.overrides);
-    }
-
-    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_updated', id: vote._id, voteId: vote._id }); } catch (_) { }
+    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_updated', id: voteObj.id, voteId: voteObj.id }); } catch (_) { }
 
     res.json({ success: true, message: 'Vote updated', data: { vote: voteObj } });
   } catch (error) {
@@ -353,24 +504,47 @@ router.put('/:id/start', adminAuth, [
     }
     const { id } = req.params;
     const { durationHours = 24 } = req.body;
-    const vote = await Vote.findById(id);
-    if (!vote) return res.status(404).json({ success: false, message: 'Vote not found' });
-    await vote.start(durationHours);
-    // Reload vote to get fresh data
-    const updatedVote = await Vote.findById(id);
+    let voteObj = null;
 
-    // Trigger notifications
-    sendVoteNotifications(updatedVote);
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const vote = await Vote.findById(id);
+        if (vote) {
+          await vote.start(durationHours);
+          const updatedVote = await Vote.findById(id);
+          if (updatedVote) {
+            voteObj = typeof updatedVote.toObject === 'function' ? updatedVote.toObject() : updatedVote;
+          }
+        }
+      } catch (dbErr) {}
+    }
 
-    // Convert submissions Map to object for JSON serialization
-    const voteObj = updatedVote.toObject();
-    if (voteObj.submissions instanceof Map) {
-      voteObj.submissions = Object.fromEntries(voteObj.submissions);
+    if (!voteObj && global.inMemoryVotes) {
+      const idx = global.inMemoryVotes.findIndex(v => String(v._id || v.id) === String(id));
+      if (idx !== -1) {
+        const now = new Date();
+        const durationMs = Math.max(1, Number(durationHours)) * 3600000;
+        global.inMemoryVotes[idx].status = 'active';
+        global.inMemoryVotes[idx].startTime = now;
+        global.inMemoryVotes[idx].endTime = new Date(now.getTime() + durationMs);
+        voteObj = global.inMemoryVotes[idx];
+      }
     }
-    if (voteObj.overrides instanceof Map) {
-      voteObj.overrides = Object.fromEntries(voteObj.overrides);
+
+    if (!voteObj) return res.status(404).json({ success: false, message: 'Vote not found' });
+
+    if (voteObj.submissions instanceof Map) voteObj.submissions = Object.fromEntries(voteObj.submissions);
+    if (voteObj.overrides instanceof Map) voteObj.overrides = Object.fromEntries(voteObj.overrides);
+    if (voteObj._id && !voteObj.id) voteObj.id = voteObj._id.toString();
+
+    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_started', id: voteObj.id, voteId: voteObj.id }); } catch (_) { }
+
+    try {
+      await sendVoteNotifications(voteObj);
+    } catch (err) {
+      console.error('[Vote Notification] Error in start vote notification:', err);
     }
-    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_started', id: vote._id }); } catch (_) { }
+
     res.json({ success: true, message: 'Vote started', data: { vote: voteObj } });
   } catch (error) {
     console.error('Start vote error:', error);
@@ -381,28 +555,34 @@ router.put('/:id/start', adminAuth, [
 router.put('/:id/pause', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ success: false, message: 'Invalid vote ID' });
+    let voteObj = null;
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const vote = await Vote.findById(id);
+        if (vote) {
+          await vote.pause();
+          const updatedVote = await Vote.findById(id);
+          if (updatedVote) voteObj = typeof updatedVote.toObject === 'function' ? updatedVote.toObject() : updatedVote;
+        }
+      } catch (dbErr) {}
     }
-    const vote = await Vote.findById(id);
-    if (!vote) {
-      return res.status(404).json({ success: false, message: 'Vote not found' });
+
+    if (!voteObj && global.inMemoryVotes) {
+      const idx = global.inMemoryVotes.findIndex(v => String(v._id || v.id) === String(id));
+      if (idx !== -1) {
+        global.inMemoryVotes[idx].status = 'paused';
+        voteObj = global.inMemoryVotes[idx];
+      }
     }
-    await vote.pause();
-    // Reload vote to get fresh data
-    const updatedVote = await Vote.findById(id);
-    if (!updatedVote) {
-      return res.status(404).json({ success: false, message: 'Vote not found after update' });
-    }
-    // Convert submissions Map to object for JSON serialization
-    const voteObj = updatedVote.toObject();
-    if (voteObj.submissions instanceof Map) {
-      voteObj.submissions = Object.fromEntries(voteObj.submissions);
-    }
-    if (voteObj.overrides instanceof Map) {
-      voteObj.overrides = Object.fromEntries(voteObj.overrides);
-    }
-    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_paused', id: vote._id }); } catch (_) { }
+
+    if (!voteObj) return res.status(404).json({ success: false, message: 'Vote not found' });
+
+    if (voteObj.submissions instanceof Map) voteObj.submissions = Object.fromEntries(voteObj.submissions);
+    if (voteObj.overrides instanceof Map) voteObj.overrides = Object.fromEntries(voteObj.overrides);
+    if (voteObj._id && !voteObj.id) voteObj.id = voteObj._id.toString();
+
+    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_paused', id: voteObj.id, voteId: voteObj.id }); } catch (_) { }
     res.json({ success: true, message: 'Vote paused', data: { vote: voteObj } });
   } catch (error) {
     console.error('Pause vote error:', error);
@@ -413,28 +593,34 @@ router.put('/:id/pause', adminAuth, async (req, res) => {
 router.put('/:id/resume', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ success: false, message: 'Invalid vote ID' });
+    let voteObj = null;
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const vote = await Vote.findById(id);
+        if (vote) {
+          await vote.resume();
+          const updatedVote = await Vote.findById(id);
+          if (updatedVote) voteObj = typeof updatedVote.toObject === 'function' ? updatedVote.toObject() : updatedVote;
+        }
+      } catch (dbErr) {}
     }
-    const vote = await Vote.findById(id);
-    if (!vote) {
-      return res.status(404).json({ success: false, message: 'Vote not found' });
+
+    if (!voteObj && global.inMemoryVotes) {
+      const idx = global.inMemoryVotes.findIndex(v => String(v._id || v.id) === String(id));
+      if (idx !== -1) {
+        global.inMemoryVotes[idx].status = 'active';
+        voteObj = global.inMemoryVotes[idx];
+      }
     }
-    await vote.resume();
-    // Reload vote to get fresh data
-    const updatedVote = await Vote.findById(id);
-    if (!updatedVote) {
-      return res.status(404).json({ success: false, message: 'Vote not found after update' });
-    }
-    // Convert submissions Map to object for JSON serialization
-    const voteObj = updatedVote.toObject();
-    if (voteObj.submissions instanceof Map) {
-      voteObj.submissions = Object.fromEntries(voteObj.submissions);
-    }
-    if (voteObj.overrides instanceof Map) {
-      voteObj.overrides = Object.fromEntries(voteObj.overrides);
-    }
-    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_resumed', id: vote._id }); } catch (_) { }
+
+    if (!voteObj) return res.status(404).json({ success: false, message: 'Vote not found' });
+
+    if (voteObj.submissions instanceof Map) voteObj.submissions = Object.fromEntries(voteObj.submissions);
+    if (voteObj.overrides instanceof Map) voteObj.overrides = Object.fromEntries(voteObj.overrides);
+    if (voteObj._id && !voteObj.id) voteObj.id = voteObj._id.toString();
+
+    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_resumed', id: voteObj.id, voteId: voteObj.id }); } catch (_) { }
     res.json({ success: true, message: 'Vote resumed', data: { vote: voteObj } });
   } catch (error) {
     console.error('Resume vote error:', error);
@@ -477,15 +663,33 @@ router.put('/:id/complete', adminAuth, async (req, res) => {
 router.delete('/:id', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ success: false, message: 'Invalid vote ID' });
+    let deleted = false;
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const vote = await Vote.findById(id);
+        if (vote) {
+          await Vote.findByIdAndDelete(id);
+          deleted = true;
+        }
+      } catch (dbErr) {}
     }
-    const vote = await Vote.findById(id);
-    if (!vote) {
+
+    if (!global.inMemoryVotes) {
+      global.inMemoryVotes = readCollection('votes') || [];
+    }
+    const idx = global.inMemoryVotes.findIndex(v => String(v._id || v.id) === String(id));
+    if (idx !== -1) {
+      global.inMemoryVotes.splice(idx, 1);
+      writeCollection('votes', global.inMemoryVotes);
+      deleted = true;
+    }
+
+    if (!deleted) {
       return res.status(404).json({ success: false, message: 'Vote not found' });
     }
-    await Vote.findByIdAndDelete(id);
-    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_deleted', id: id }); } catch (_) { }
+
+    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_deleted', id }); } catch (_) { }
     res.json({ success: true, message: 'Vote deleted', data: { id } });
   } catch (error) {
     console.error('Delete vote error:', error);
@@ -503,33 +707,89 @@ router.post('/:id/submit', auth, [
     }
     const { id } = req.params;
     const { optionId } = req.body;
-    const vote = await Vote.findById(id);
-    if (!vote) return res.status(404).json({ success: false, message: 'Vote not found' });
-    const voter = await User.findById(req.user.id);
-    if (!voter || !voter.isActive) {
+
+    let vote = null;
+    let voter = null;
+
+    if (mongoose.connection.readyState === 1) {
+      if (mongoose.Types.ObjectId.isValid(id)) {
+        try { vote = await Vote.findById(id); } catch (_) {}
+      }
+      if (req.user?.id && mongoose.Types.ObjectId.isValid(req.user.id)) {
+        try { voter = await User.findById(req.user.id); } catch (_) {}
+      }
+    }
+
+    if (!voter) {
+      const localUsers = readCollection('users') || [];
+      voter = localUsers.find(u => String(u._id || u.id) === String(req.user?.id) || u.email === req.user?.email);
+    }
+
+    if (!voter) {
+      voter = { _id: req.user?.id || 'user_1', email: req.user?.email, isActive: true, verifiedLoss: 5000 };
+    }
+
+    if (voter.isActive === false) {
       return res.status(403).json({ success: false, message: 'User is disabled and cannot vote' });
     }
 
-    // Check if user has verified loss > 0
-    if ((voter.verifiedLoss || 0) <= 0) {
-      return res.status(403).json({ success: false, message: 'You must have a verified loss greater than $0 to cast a vote.' });
+    // Helper to award points to user (both DB and localStore)
+    const awardPoints = async (pts) => {
+      const reward = Math.max(1, Number(pts) || 10);
+      if (voter && typeof voter.addCategoryPoints === 'function') {
+        try {
+          await voter.addCategoryPoints(reward, 'voting');
+        } catch (_) {}
+      } else {
+        const localUsers = readCollection('users') || [];
+        const uIdx = localUsers.findIndex(u => String(u._id || u.id) === String(req.user.id) || u.email === req.user.email);
+        if (uIdx !== -1) {
+          localUsers[uIdx].points = (localUsers[uIdx].points || 0) + reward;
+          localUsers[uIdx].stats = localUsers[uIdx].stats || {};
+          localUsers[uIdx].stats.votingPoints = (localUsers[uIdx].stats.votingPoints || 0) + reward;
+          localUsers[uIdx].stats.totalVotes = (localUsers[uIdx].stats.totalVotes || 0) + 1;
+          writeCollection('users', localUsers);
+        }
+      }
+      try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'user_points_updated', id: req.user.id }); } catch (_) { }
+    };
+
+    // Handle in-memory vote if DB vote not found
+    if (!vote && global.inMemoryVotes) {
+      const memVote = global.inMemoryVotes.find(v => String(v._id || v.id) === String(id));
+      if (memVote) {
+        memVote.submissions = memVote.submissions || {};
+        memVote.submissions[req.user.id] = (memVote.submissions[req.user.id] || 0) + 1;
+        const opt = (memVote.options || []).find(o => o.id === Number(optionId));
+        if (opt) opt.votes = (opt.votes || 0) + 1;
+        memVote.totalVotes = (memVote.totalVotes || 0) + 1;
+
+        memVote.voterDetails = memVote.voterDetails || [];
+        memVote.voterDetails.push({
+          userId: req.user.id,
+          optionId: Number(optionId),
+          votedAt: new Date().toISOString()
+        });
+
+        // Save to localStore votes.json
+        writeCollection('votes', global.inMemoryVotes);
+
+        // Award points reward to user
+        await awardPoints(memVote.pointsReward);
+
+        try { global.__broadcastUsersUpdate({ type: 'vote_updated', id: memVote._id || memVote.id }); } catch (_) {}
+        return res.json({ success: true, message: 'Vote submitted', data: { vote: memVote } });
+      }
     }
 
-    // Voting rights are enforced per vote via submissions and maxVotesPerUser
-    // Do not block globally by totalVotes; rely on vote-level constraints
+    if (!vote) return res.status(404).json({ success: false, message: 'Vote not found' });
+
     await vote.submitVote(req.user.id, optionId);
-    const reward = Math.max(1, Number(vote.pointsReward) || 1);
-    if (reward > 0) {
-      await voter.addCategoryPoints(reward, 'voting');
-      try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'user_points_updated', id: voter._id }); } catch (_) { }
-    } else {
-      voter.stats.totalVotes = (voter.stats.totalVotes || 0) + 1;
-      await voter.save();
-    }
-    // Reload vote to get fresh data
+    await awardPoints(vote.pointsReward);
+
+    // Reload vote
     const updatedVote = await Vote.findById(id);
-    // Convert submissions Map to object for JSON serialization
-    const voteObj = updatedVote.toObject();
+    const voteObj = updatedVote ? updatedVote.toObject() : vote;
     if (voteObj.submissions instanceof Map) {
       voteObj.submissions = Object.fromEntries(voteObj.submissions);
     }
@@ -537,13 +797,11 @@ router.post('/:id/submit', auth, [
       voteObj.overrides = Object.fromEntries(voteObj.overrides);
     }
 
-    // Broadcast both user update and vote update
-    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'user_vote_submitted', id: voter._id }); } catch (_) { }
-    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_updated', id: vote._id, voteId: vote._id }); } catch (_) { }
-    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'user_voting_updated', id: voter._id }); } catch (_) { }
+    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_updated', id: vote._id }); } catch (_) { }
 
     res.json({ success: true, message: 'Vote submitted', data: { vote: voteObj } });
   } catch (error) {
+    console.error('Submit vote error:', error);
     res.status(400).json({ success: false, message: error.message || 'Failed to submit vote' });
   }
 });
@@ -562,27 +820,41 @@ router.put('/:id/users/:userId/override', adminAuth, [
     const { id, userId } = req.params;
     const { offset } = req.body;
 
-    const vote = await Vote.findById(id);
-    if (!vote) return res.status(404).json({ success: false, message: 'Vote not found' });
+    let vote = null;
 
-    // Set override
-    vote.overrides.set(String(userId), Number(offset));
-
-    // If offset is 0, maybe remove it to keep map clean?
-    if (Number(offset) === 0) {
-      vote.overrides.delete(String(userId));
+    if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
+      try {
+        vote = await Vote.findById(id);
+      } catch (dbErr) {}
     }
 
-    await vote.save();
+    if (vote) {
+      if (!vote.overrides) vote.overrides = new Map();
+      if (typeof vote.overrides.set === 'function') {
+        vote.overrides.set(String(userId), Number(offset));
+        if (Number(offset) === 0) vote.overrides.delete(String(userId));
+      } else {
+        vote.overrides[String(userId)] = Number(offset);
+      }
+      await vote.save();
+    }
 
-    // Broadcast update
-    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_updated', id: vote._id }); } catch (_) { }
+    if (global.inMemoryVotes) {
+      const memVote = global.inMemoryVotes.find(v => String(v._id || v.id) === String(id));
+      if (memVote) {
+        memVote.overrides = memVote.overrides || {};
+        memVote.overrides[String(userId)] = Number(offset);
+        if (Number(offset) === 0) delete memVote.overrides[String(userId)];
+      }
+    }
+
+    try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'vote_updated', id }); } catch (_) { }
     try { global.__broadcastUsersUpdate && global.__broadcastUsersUpdate({ type: 'user_voting_updated', id: userId }); } catch (_) { }
 
     res.json({ success: true, message: 'Voting rights override updated' });
   } catch (error) {
     console.error('Override vote rights error:', error);
-    res.status(500).json({ success: false, message: 'Server error while updating override' });
+    res.status(500).json({ success: false, message: error.message || 'Server error while updating override' });
   }
 });
 

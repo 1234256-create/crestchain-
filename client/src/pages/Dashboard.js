@@ -341,16 +341,32 @@ const Dashboard = () => {
   };
 
   const dashAllowedSum = (activeVotes || []).reduce((sum, v) => {
-    // Check for user override
-    if (v.myVotingRights) {
+    if (v.myVotingRights && typeof v.myVotingRights.total === 'number') {
       return sum + v.myVotingRights.total;
     }
-    return sum + (v.maxVotesPerUser || 1);
+    const dashUserIds = [
+      user?.email,
+      user?._id,
+      user?.id,
+      String(user?._id || ''),
+      String(user?.id || '')
+    ].filter(Boolean);
+    let offset = 0;
+    if (v.overrides) {
+      for (const uid of dashUserIds) {
+        if (v.overrides[uid] !== undefined) {
+          offset = Number(v.overrides[uid]);
+          break;
+        }
+      }
+    }
+    const base = Number(v.maxVotesPerUser) || Number(votesAllowed) || 1;
+    return sum + Math.max(0, base + offset);
   }, 0);
 
   const dashUsedSum = (activeVotes || []).reduce((sum, v) => sum + dashCountUsed(v), 0);
-  const dashAllowed = (activeVotes && activeVotes.length > 0) ? dashAllowedSum : 0; // If no active votes, no allowance
-  const dashUsed = (activeVotes && activeVotes.length > 0) ? dashUsedSum : 0;
+  const dashAllowed = (activeVotes && activeVotes.length > 0) ? dashAllowedSum : (votesAllowed || 0);
+  const dashUsed = (activeVotes && activeVotes.length > 0) ? dashUsedSum : (votesUsed || 0);
   const dashRemaining = Math.max(0, dashAllowed - dashUsed);
 
   return (
@@ -364,12 +380,12 @@ const Dashboard = () => {
           className="mb-6 sm:mb-8 px-4 sm:px-6"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div className="mb-4 sm:mb-0">
+            <div>
               <h1 className="mobile-header font-bold text-white mb-2">
                 Welcome back, {user?.firstName}!
               </h1>
-              <p className="text-gray-300 mobile-text">Ready to participate in the DOA ecosystem?</p>
             </div>
+
           </div>
         </motion.div>
 
@@ -399,29 +415,29 @@ const Dashboard = () => {
                 key={vote._id || vote.id || Math.random()}
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-white rounded-xl shadow-lg border-l-4 border-purple-600 overflow-hidden flex flex-col md:flex-row items-center justify-between p-4"
+                className="bg-[#031d24]/90 rounded-xl shadow-lg border-l-4 border-cyan-500 overflow-hidden flex flex-col md:flex-row items-center justify-between p-4 border border-cyan-500/20 shadow-cyan-950/40"
               >
                 <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto">
-                  <div className="p-3 bg-purple-100 text-purple-600 rounded-full shrink-0">
+                  <div className="p-3 bg-cyan-950/60 text-cyan-300 rounded-full shrink-0 border border-cyan-500/30">
                     <Vote className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-lg font-bold text-gray-800">{vote.title || 'New Vote Created!'}</h4>
-                    <p className="text-sm text-gray-500">A new proposal needs your attention</p>
+                    <h4 className="text-lg font-bold text-white">{vote.title || 'New Vote Created!'}</h4>
+                    <p className="text-sm text-cyan-200/70">A new proposal needs your attention</p>
                   </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto justify-between">
                   <div className="text-sm flex flex-col gap-1 items-start md:items-end w-full sm:w-auto">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Clock className="w-4 h-4 text-purple-500" />
+                    <div className="flex items-center gap-2 text-cyan-200">
+                      <Clock className="w-4 h-4 text-cyan-400" />
                       <span>Starts: {vote.startTime ? new Date(vote.startTime).toLocaleString() : 'Now'}</span>
                     </div>
                     {vote.endTime && (
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Timer className="w-4 h-4 text-purple-500" />
+                      <div className="flex items-center gap-2 text-cyan-200">
+                        <Timer className="w-4 h-4 text-cyan-400" />
                         <span>Ends: {new Date(vote.endTime).toLocaleString()}</span>
-                        <span className="ml-2 font-mono font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                        <span className="ml-2 font-mono font-bold text-red-400 bg-red-950/60 px-2 py-0.5 rounded-full border border-red-500/30">
                           <LiveTimer endTime={vote.endTime} />
                         </span>
                       </div>
@@ -430,7 +446,7 @@ const Dashboard = () => {
 
                   <button
                     onClick={() => navigate(`/voting?voteId=${vote._id || vote.id}`)}
-                    className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto"
+                    className="px-6 py-2 bg-gradient-to-r from-[#086a7e] to-[#0e7490] text-white rounded-lg hover:from-[#097d95] hover:to-[#0891b2] transition-all font-medium flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto shadow-md shadow-cyan-950/50"
                   >
                     Vote Now <Vote className="w-4 h-4" />
                   </button>
@@ -443,75 +459,39 @@ const Dashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* Total Points Section */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="mobile-glass rounded-xl mobile-card mb-6 sm:mb-8"
-        >
-          <div className="text-center">
-            <h2 className="mobile-subheader font-bold text-white mb-2">Total Points</h2>
-            <div className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
-              {totalPoints.toLocaleString()}
-            </div>
-            <p className="text-gray-300 mobile-text">
-              Live points from your activity across the platform
-            </p>
-          </div>
-        </motion.div>
 
         {/* Main Action Buttons */}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 responsive-gap mb-6 sm:mb-8">
           <motion.button
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             onClick={() => navigate('/voting')}
-            className="mobile-glass rounded-xl mobile-card hover:bg-white/20 transition-all duration-300 group touch-target"
+            className="mobile-glass rounded-xl mobile-card hover:bg-cyan-950/40 border border-cyan-500/20 transition-all duration-300 group touch-target"
           >
             <div className="flex flex-col sm:flex-row items-center justify-between">
               <div className="flex items-center mb-4 sm:mb-0">
-                <div className="p-3 sm:p-4 bg-purple-500/20 rounded-lg mr-4">
-                  <Vote className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400" />
+                <div className="p-3 sm:p-4 bg-cyan-500/20 border border-cyan-500/30 rounded-lg mr-4 shadow-sm shadow-cyan-500/20">
+                  <Vote className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-300" />
                 </div>
                 <div className="text-left">
                   <h3 className="text-lg sm:text-xl font-bold text-white">VOTE</h3>
-                  <p className="text-gray-300 text-sm sm:text-base">Cast your vote on decisions and earn points</p>
+                  <p className="text-gray-300 text-sm sm:text-base">Provide feedback on refunds and vote on decisions.</p>
                 </div>
               </div>
               <div className="text-center sm:text-right">
-                <div className="text-yellow-400 font-semibold text-sm sm:text-base">
+                <div className="text-cyan-300 font-semibold text-sm sm:text-base">
                   Active rounds: {activeRoundsCount}
                 </div>
                 <p className="text-gray-400 text-xs sm:text-sm">Voting status</p>
               </div>
             </div>
           </motion.button>
-
-          <motion.button
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            onClick={() => navigate('/contribute')}
-            className="mobile-glass rounded-xl mobile-card hover:bg-white/20 transition-all duration-300 group touch-target"
-          >
-            <div className="flex flex-col sm:flex-row items-center justify-between">
-              <div className="flex items-center mb-4 sm:mb-0">
-                <div className="p-3 sm:p-4 bg-green-500/20 rounded-lg mr-4">
-                  <Coins className="w-6 h-6 sm:w-8 sm:h-8 text-green-400" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-lg sm:text-xl font-bold text-white">CONTRIBUTE</h3>
-                  <p className="text-gray-300 text-sm sm:text-base">Contribute to the DAO’s progress and earn points</p>
-                </div>
-              </div>
-              <div className="text-center sm:text-right">
-                <div className="text-yellow-400 font-semibold text-sm sm:text-base">
-                  Contribution points: {pointsContribution.toLocaleString()}
-                </div>
-                <p className="text-gray-400 text-xs sm:text-sm">Balance</p>
-              </div>
-            </div>
-          </motion.button>
         </div>
+
+
+
+
 
         {/* Loss & Restitution Stats */}
         <motion.div
@@ -549,7 +529,7 @@ const Dashboard = () => {
           className="mobile-glass rounded-xl mobile-card mb-6 sm:mb-8"
         >
           <h3 className="mobile-subheader font-bold text-white mb-4 sm:mb-6">Your Stats</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 responsive-gap mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 responsive-gap mb-6">
             <div className={`rounded-lg p-4 transition-all duration-300 ${userRank >= 5000 && userRank <= 5009 ? 'bg-gradient-to-br from-yellow-500/30 to-yellow-600/30 border border-yellow-400/50' : 'bg-white/10'}`}>
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-white font-semibold text-sm sm:text-base">Leaderboard Ranking</h4>
@@ -586,37 +566,24 @@ const Dashboard = () => {
                   <span className="text-white font-semibold">{activeRoundsCount}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-300 text-sm">Your Points:</span>
+                  <span className="text-gray-300 text-sm">Total Points:</span>
                   <span className="text-green-400 font-semibold">{totalPoints.toLocaleString()}</span>
                 </div>
               </div>
             </div>
-          </div>
-          {/* Points Breakdown */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 responsive-gap mb-6">
-            <div className="bg-white/10 rounded-lg p-4">
-              <h4 className="text-white font-semibold mb-2 text-sm sm:text-base">Voting Points</h4>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-300 text-sm">Total:</span>
-                <span className="text-white font-semibold">{pointsVoting.toLocaleString()}</span>
+            <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-white font-semibold text-sm sm:text-base">Referral Points</h4>
+                <Users className="w-5 h-5 text-emerald-400" />
               </div>
-            </div>
-            <div className="bg-white/10 rounded-lg p-4">
-              <h4 className="text-white font-semibold mb-2 text-sm sm:text-base">Contribution Points</h4>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-300 text-sm">Total:</span>
-                <span className="text-white font-semibold">{pointsContribution.toLocaleString()}</span>
-              </div>
-            </div>
-            <div className="bg-white/10 rounded-lg p-4">
-              <h4 className="text-white font-semibold mb-2 text-sm sm:text-base">Referral Points</h4>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-300 text-sm">Total:</span>
-                <span className="text-white font-semibold">{pointsReferral.toLocaleString()}</span>
+              <div className="space-y-1">
+                <div className="text-3xl font-bold text-emerald-400">{pointsReferral.toLocaleString()}</div>
+                <p className="text-emerald-200/70 text-xs">Real points from invited users (+10 each)</p>
               </div>
             </div>
           </div>
           <h4 className="text-white font-semibold mb-3 text-sm sm:text-base">Your Recent Activity</h4>
+
           <div className="space-y-2 max-h-40 overflow-y-auto">
             {recentActivity.length === 0 ? (
               <div className="bg-white/10 rounded-lg p-3">

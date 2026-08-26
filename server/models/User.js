@@ -214,13 +214,19 @@ const applyUserPointsTransform = (doc, ret) => {
   }
 
   // 2. Trust the real database fields for all points
-  // These are now updated directly by admin and earn naturally
-  ret.stats.votingPoints = Number(doc.get('stats.votingPoints')) || 0;
-  ret.stats.contributionPoints = Number(doc.get('stats.contributionPoints')) || 0;
-  ret.stats.referralPoints = Number(doc.get('stats.referralPoints')) || 0;
-  ret.points = Number(doc.get('points')) || 0;
+  const rawVoting = Number(doc.get('stats.votingPoints')) || 0;
+  const rawContrib = Number(doc.get('stats.contributionPoints')) || 0;
+  const rawReferral = Number(doc.get('stats.referralPoints')) || 0;
 
-  // 3. Keep voting rights override (Clear and separate)
+  ret.stats.votingPoints = rawVoting;
+  ret.stats.contributionPoints = rawContrib;
+  ret.stats.referralPoints = rawReferral;
+
+  const basePoints = Number(doc.get('points')) || 0;
+  const computedTotal = rawVoting + rawContrib + rawReferral;
+  ret.points = Math.max(basePoints, computedTotal);
+
+  // 3. Keep voting rights override
   const vrOffset = Number(doc.get('overrides.votingRightsOffset'));
   if (!isNaN(vrOffset)) {
     const baseVR = Number(doc.get('votingRights')) || 0;
@@ -333,6 +339,12 @@ userSchema.statics.getLeaderboard = function (limit = 10) {
 userSchema.statics.getUserStats = async function () {
   const stats = await this.aggregate([
     {
+      $match: {
+        role: { $ne: 'admin' },
+        email: { $ne: 'support@veritasaid.com' }
+      }
+    },
+    {
       $group: {
         _id: null,
         totalUsers: { $sum: 1 },
@@ -427,23 +439,73 @@ userSchema.methods.calculateRealStats = async function () {
   const Vote = mongoose.model('Vote');
   const Contribution = mongoose.model('Contribution');
   const User = mongoose.model('User');
+  const { readCollection } = require('../utils/localStore');
 
-  // 1. Real Voting Points (Sum of rewards for every vote cast)
-  // Summing pointsReward for every entry in voterDetails for this user.
-  const userVotes = await Vote.find({ 'voterDetails.userId': this._id });
+  const uidStr = String(this._id || this.id || '');
+  const userRefCode = this.referralCode;
+
+  // 1. Real Voting Points
   let realVotingPoints = 0;
-  userVotes.forEach(vote => {
-    const userClicks = vote.voterDetails.filter(d => d.userId && d.userId.toString() === this._id.toString());
-    realVotingPoints += userClicks.length * (vote.pointsReward || 0);
-  });
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const userVotes = await Vote.find({ 'voterDetails.userId': this._id });
+      userVotes.forEach(vote => {
+        const userClicks = vote.voterDetails.filter(d => d.userId && d.userId.toString() === uidStr);
+        realVotingPoints += userClicks.length * (vote.pointsReward || 0);
+      });
+    } catch (_) {}
+  }
 
-  // 2. Real Referral Points (10 per referral)
-  const realReferralCount = await User.countDocuments({ referredBy: this._id });
+  // 2. Real Referral Count & Points (10 per referral)
+  const countedEmails = new Set();
+
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const dbRefs = await User.find({
+        $or: [
+          { referredBy: this._id },
+          { referredBy: uidStr }
+        ]
+      }).select('email');
+      dbRefs.forEach(u => {
+        if (u.email) countedEmails.add(u.email.toLowerCase());
+      });
+    } catch (_) {}
+  }
+
+  try {
+    const localUsers = readCollection('users') || [];
+    localUsers.forEach(u => {
+      if (u.email && !countedEmails.has(u.email.toLowerCase())) {
+        if (String(u.referredBy || '') === uidStr || (userRefCode && u.referralCode === userRefCode && String(u._id || u.id) !== uidStr)) {
+          countedEmails.add(u.email.toLowerCase());
+        }
+      }
+    });
+  } catch (_) {}
+
+  if (userRefCode) {
+    try {
+      const localApps = readCollection('applications') || [];
+      localApps.forEach(a => {
+        if (a.email && a.referralCode === userRefCode && !countedEmails.has(a.email.toLowerCase())) {
+          countedEmails.add(a.email.toLowerCase());
+        }
+      });
+    } catch (_) {}
+  }
+
+  const realReferralCount = countedEmails.size;
   const realReferralPoints = realReferralCount * 10;
 
-  // 3. Real Contribution Points (Sum of pointsAwarded from approved contributions)
-  const contributions = await Contribution.find({ user: this._id, status: 'approved' });
-  const realContributionPoints = contributions.reduce((sum, c) => sum + (c.pointsAwarded || 0), 0);
+  // 3. Real Contribution Points
+  let realContributionPoints = 0;
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const contributions = await Contribution.find({ user: this._id, status: 'approved' });
+      realContributionPoints = contributions.reduce((sum, c) => sum + (c.pointsAwarded || 0), 0);
+    } catch (_) {}
+  }
 
   return {
     votingPoints: realVotingPoints,

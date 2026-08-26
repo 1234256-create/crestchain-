@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Shield } from 'lucide-react';
 import { clearJoinWizard, setJoinWizard } from '../utils/datastore';
+
 
 const JoinNotice = () => {
   const navigate = useNavigate();
@@ -22,23 +24,27 @@ const JoinNotice = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+    <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a]">
+      <div className="max-w-4xl mx-auto px-4 py-12">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="rounded-2xl bg-white/10 backdrop-blur-lg border border-white/20 p-8 text-white"
+          className="bg-[#031d24]/80 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-cyan-500/20 text-white shadow-2xl shadow-cyan-950/60"
         >
-          <h1 className="text-2xl md:text-3xl font-bold mb-4">
-            Important Notice — Please Read Before Submitting
-          </h1>
-          <div className="space-y-4 text-white/90 leading-relaxed">
+          <div className="flex items-center gap-3 mb-6">
+            <Shield className="w-8 h-8 text-cyan-400" />
+            <h1 className="text-2xl sm:text-3xl font-bold">Important Notice</h1>
+          </div>
+
+          <div className="space-y-4 text-gray-200 text-sm sm:text-base leading-relaxed">
             <p>
-              We are collecting the information below to assist with potential recovery options for individuals who have experienced financial losses. Your responses will help us verify and validate claims as part of our internal review process.
+              Please read carefully before proceeding. Veritas helps eligible fraud victims access refund allocations through structured verification.
             </p>
             <p>
-              Please provide accurate and truthful information. Submitting false claims or deliberately inflating figures may be considered an attempt to extort funds and could lead to legal action.
+              To process your request accurately, you will need to provide basic incident details, your contact email, and documentation or transaction hashes related to your loss.
+            </p>
+            <p>
+              All submitted evidence is encrypted and reviewed securely by our verification system.
             </p>
             <p className="font-semibold text-red-300">
               🔺 Warning: Any individual found to have submitted false or misleading information may be disqualified from recovery assistance and could be prosecuted for fraud or attempted extortion.
@@ -62,7 +68,7 @@ const JoinNotice = () => {
             <button
               type="button"
               onClick={handleNext}
-              className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold hover:from-purple-600 hover:to-blue-600 transition"
+              className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#086a7e] to-[#0e7490] text-white font-semibold hover:from-[#097d95] hover:to-[#0891b2] shadow-md shadow-cyan-950/50 transition"
             >
               Next
             </button>
@@ -70,6 +76,7 @@ const JoinNotice = () => {
         </motion.div>
       </div>
     </div>
+
   );
 };
 

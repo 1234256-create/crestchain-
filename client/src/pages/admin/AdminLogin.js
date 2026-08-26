@@ -92,7 +92,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a] flex items-center justify-center p-4 admin-scope">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -105,12 +105,12 @@ const AdminLogin = () => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="inline-flex items-center justify-center w-16 h-16 bg-purple-600 rounded-full mb-4"
+            className="inline-flex items-center justify-center mb-3"
           >
-            <Shield className="w-8 h-8 text-white" />
+            <img src="/images/logo.png" alt="Veritas Logo" className="h-16 sm:h-20 w-auto object-contain drop-shadow-lg" />
           </motion.div>
           <h1 className="text-3xl font-bold text-white mb-2">Admin Panel</h1>
-          <p className="text-gray-300">DOA Administrative Access</p>
+          <p className="text-gray-300">Veritas Administrative Access</p>
         </div>
 
         {/* Login Form */}
@@ -128,33 +128,11 @@ const AdminLogin = () => {
               className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg"
             >
               <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-400" />
+                <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
                 <div>
-                  <p className="text-red-300 font-medium">Account Temporarily Blocked</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Clock className="w-4 h-4 text-red-400" />
-                    <span className="text-red-400 text-sm">
-                      Time remaining: {formatTime(blockTimeRemaining)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Login Attempts Warning */}
-          {loginAttempts > 0 && !isBlocked && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mb-6 p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg"
-            >
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-yellow-400" />
-                <div>
-                  <p className="text-yellow-300 font-medium">Security Warning</p>
-                  <p className="text-yellow-400 text-sm">
-                    {maxAttempts - loginAttempts} attempts remaining before account lock
+                  <p className="text-red-300 text-sm font-medium">Account Temporarily Blocked</p>
+                  <p className="text-red-400 text-xs mt-1">
+                    Try again in: {formatTime(blockTimeRemaining)}
                   </p>
                 </div>
               </div>
@@ -162,11 +140,8 @@ const AdminLogin = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-200 mb-2">
-                Admin Username
-              </label>
+              <label className="block text-gray-300 text-sm font-medium mb-2">Username</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -174,71 +149,55 @@ const AdminLogin = () => {
                   name="username"
                   value={credentials.username}
                   onChange={handleInputChange}
-                  disabled={isBlocked || isLoading}
-                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Enter admin username"
-                  autoComplete="username"
+                  disabled={isBlocked || isLoading}
+                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-all disabled:opacity-50"
+                  required
                 />
               </div>
             </div>
 
-            {/* Password Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-200 mb-2">
-                Admin Password
-              </label>
+              <label className="block text-gray-300 text-sm font-medium mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={credentials.password}
                   onChange={handleInputChange}
-                  disabled={isBlocked || isLoading}
-                  className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Enter admin password"
-                  autoComplete="current-password"
+                  disabled={isBlocked || isLoading}
+                  className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-all disabled:opacity-50"
+                  required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={isBlocked || isLoading}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Submit Button */}
             <motion.button
               type="submit"
-              disabled={isBlocked || isLoading || !credentials.username || !credentials.password}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-purple-600 disabled:hover:to-blue-600 transition-all duration-200"
+              disabled={isBlocked || isLoading}
+              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-lg shadow-emerald-950/50 transition-all disabled:opacity-50 cursor-pointer"
             >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Authenticating...
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2">
-                  <CheckCircle className="w-5 h-5" />
-                  Access Admin Panel
-                </div>
-              )}
+              {isLoading ? 'Authenticating...' : 'Sign In to Admin Panel'}
             </motion.button>
           </form>
 
-          {/* Security Notice */}
-          <div className="mt-6 p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-            <div className="flex items-start gap-3">
-              <Shield className="w-5 h-5 text-blue-400 mt-0.5" />
+          <div className="mt-6 pt-6 border-t border-white/10">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-emerald-400 shrink-0" />
               <div>
-                <p className="text-blue-300 font-medium text-sm">Security Notice</p>
-                <p className="text-blue-400 text-xs mt-1">
+                <p className="text-emerald-300 font-medium text-sm">Security Notice</p>
+                <p className="text-emerald-400/90 text-xs mt-1">
                   This is a secure administrative area. All access attempts are logged and monitored.
                 </p>
               </div>
@@ -254,7 +213,7 @@ const AdminLogin = () => {
           className="text-center mt-8"
         >
           <p className="text-gray-400 text-sm">
-            DOA Admin Panel v2.0 • Secure Access Portal
+            Veritas Admin Panel v2.0 • Secure Access Portal
           </p>
         </motion.div>
       </motion.div>

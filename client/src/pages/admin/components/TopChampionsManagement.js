@@ -25,7 +25,7 @@ const TopChampionsManagement = () => {
     })));
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(null); // rank index being saved
-    const [baseUserCount, setBaseUserCount] = useState(6000);
+    const [baseUserCount, setBaseUserCount] = useState(13780);
     const [loadingSettings, setLoadingSettings] = useState(false);
 
     const fetchData = useCallback(async () => {
@@ -39,7 +39,8 @@ const TopChampionsManagement = () => {
                 params: { limit: 100, type: 'total' },
                 headers
             });
-            const allUsers = res.data?.data?.users || res.data?.data?.leaderboard || [];
+            const rawUsers = res.data?.data?.users || res.data?.data?.leaderboard || [];
+            const allUsers = rawUsers.filter(u => u.role !== 'admin' && u.email !== 'support@veritasaid.com');
 
             // 2. Map users to 1-10 slots based on rankOverride
             const newSlots = Array.from({ length: 10 }, (_, i) => {

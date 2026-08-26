@@ -15,7 +15,8 @@ import { getUserMeta, castVote, getActiveVotes as dsGetActiveVotes, submitVoteOp
 const Voting = () => {
   const { user } = useContext(AuthContext);
   const location = useLocation();
-  const [loading, setLoading] = useState(false);
+  const [submittingVoteId, setSubmittingVoteId] = useState(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const [votesRemaining, setVotesRemaining] = useState(0);
   const [votesAllowed, setVotesAllowed] = useState(0);
@@ -51,19 +52,13 @@ const Voting = () => {
     const loadVotes = async () => {
       try {
         const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
-        if (!token) {
-          console.error('No token found for loading votes');
-          setActiveVotes([]);
-          return;
-        }
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
         // Get ALL active votes - no limit on number of simultaneous active votes
         const res = await axios.get('/api/votes', {
-          params: { status: 'active', limit: 200 }, // Increased limit to show all active votes
-          headers: { Authorization: `Bearer ${token}` }
+          params: { status: 'active', limit: 200 },
+          headers
         });
         const apiVotes = res.data?.data?.votes || [];
-        console.log(`Loaded ${apiVotes.length} active votes from API`);
-        // Transform API votes to match expected format - include ALL progressive fields
         const transformed = apiVotes.map(v => ({
           id: v._id || v.id,
           title: v.title,
@@ -86,13 +81,12 @@ const Voting = () => {
           overrides: v.overrides ? (v.overrides instanceof Map ? Object.fromEntries(v.overrides) : v.overrides) : {},
           myVotingRights: v.myVotingRights
         }));
-        console.log(`Setting ${transformed.length} active votes to state`);
         setActiveVotes(transformed);
       } catch (error) {
         console.error('Error loading votes:', error);
-        console.error('Error details:', error.response?.data || error.message);
-        // Fallback to local datastore
         setActiveVotes(dsGetActiveVotes());
+      } finally {
+        setIsInitialLoading(false);
       }
     };
 
@@ -122,7 +116,6 @@ const Voting = () => {
       if (voteId) {
         const el = document.getElementById(`vote-${voteId}`);
         if (el) {
-          // Delay to ensure the DOM has painted the votes
           setTimeout(() => {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             el.classList.add('ring-4', 'ring-purple-500');
@@ -154,7 +147,6 @@ const Voting = () => {
   };
 
   const getVoteRights = (vote) => {
-    // If backend provided pre-calculated rights (for standard users)
     if (vote.myVotingRights) {
       return {
         total: vote.myVotingRights.total,
@@ -163,15 +155,10 @@ const Voting = () => {
       };
     }
 
-    // Fallback or Admin case: calculate manually
     const base = vote.maxVotesPerUser || 1;
     let offset = 0;
 
-    // Check for override
-    // userIds is available in scope [email, _id, id...]
-    // Overrides are keyed by user ID (usually _id)
     if (vote.overrides) {
-      // Try to find an override matching any of the user's IDs
       for (const id of userIds) {
         if (vote.overrides[id] !== undefined) {
           offset = Number(vote.overrides[id]);
@@ -197,8 +184,6 @@ const Voting = () => {
     window.addEventListener('datastore:update', onUpdate);
     return () => window.removeEventListener('datastore:update', onUpdate);
   }, [user?.email]);
-
-  // Removed dummy handlers and reset logic
 
   const formatRemaining = (endIso) => {
     if (!endIso) return null;
@@ -242,13 +227,11 @@ const Voting = () => {
       toast.error('Please log in to vote.');
       return;
     }
-    // Check submissions by both email and user ID
     const { remaining: perRoundRemaining } = getVoteRights(vote);
     if (perRoundRemaining <= 0) {
       toast.error(`No rights remaining for this round.`);
       return;
     }
-    // Rights are per round; no global gating
     setSelectedOptions((prev) => ({ ...prev, [vote.id]: option.id }));
     toast.success(`Selected: ${option.text}`);
   };
@@ -259,30 +242,23 @@ const Voting = () => {
       return;
     }
 
-    // Check for verified loss requirement
-    if ((user.verifiedLoss || 0) <= 0) {
-      toast.error('You must have a verified loss greater than $0 to cast a vote.');
-      return;
-    }
-
     const selectedOptionId = selectedOptions[vote.id];
     if (selectedOptionId == null) {
       toast.error('Please select an option first.');
       return;
     }
-    // Check submissions by both email and user ID
     const { remaining: perRoundRemaining } = getVoteRights(vote);
     if (perRoundRemaining <= 0) {
       toast.error(`No rights remaining for this round.`);
       return;
     }
 
-    setLoading(true);
+    setSubmittingVoteId(vote.id);
     try {
       const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
       if (!token) {
         toast.error('Authentication required. Please log in.');
-        setLoading(false);
+        setSubmittingVoteId(null);
         return;
       }
       const response = await axios.post(
@@ -292,9 +268,8 @@ const Voting = () => {
       );
 
       if (response.data?.success) {
-        // Reload votes to get updated data
         const res = await axios.get('/api/votes', {
-          params: { status: 'active', limit: 100 },
+          params: { status: 'active', limit: 200 },
           headers: { Authorization: `Bearer ${token}` }
         });
         const apiVotes = res.data?.data?.votes || [];
@@ -329,14 +304,14 @@ const Voting = () => {
       const errorMessage = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || error.message || 'Failed to submit vote';
       toast.error(errorMessage);
     } finally {
-      setLoading(false);
+      setSubmittingVoteId(null);
     }
   };
 
-  if (loading) {
+  if (isInitialLoading && activeVotes.length === 0) {
     return (
       <div className="min-h-screen hero-gradient flex items-center justify-center">
-        <div className="text-white text-xl">Loading voting data...</div>
+        <div className="text-white text-xl animate-pulse">Loading voting data...</div>
       </div>
     );
   }
@@ -371,17 +346,17 @@ const Voting = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mb-8 p-6 rounded-2xl bg-red-500/10 border-2 border-red-500/50 backdrop-blur-md flex items-start gap-4 shadow-lg shadow-red-900/20"
+            className="mb-8 p-6 rounded-2xl bg-red-950/85 border-2 border-red-500/70 backdrop-blur-md flex items-start gap-4 shadow-xl shadow-red-950/60"
           >
-            <div className="bg-red-500 rounded-full p-2 flex-shrink-0 animate-pulse">
+            <div className="bg-red-600 rounded-full p-2.5 flex-shrink-0 animate-pulse shadow-md">
               <AlertCircle className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-red-300 text-lg font-bold mb-1">Voting Restricted</h3>
-              <p className="text-red-200/90 font-medium">
+              <h3 className="text-white text-xl font-black tracking-tight mb-1">Voting Restricted</h3>
+              <p className="text-red-100 font-bold text-sm sm:text-base leading-snug">
                 You are not eligible to vote because you do not have a verified loss.
               </p>
-              <p className="text-red-400/70 text-xs mt-2">
+              <p className="text-red-200 font-bold text-xs mt-2.5 bg-red-900/80 px-3 py-1.5 rounded-lg border border-red-500/40 inline-block shadow-xs">
                 Voting is reserved for verified holders who have experienced financial losses.
               </p>
             </div>
@@ -478,17 +453,17 @@ const Voting = () => {
                           <button
                             onClick={() => !disabled && onSelectOption(vote, opt)}
                             disabled={disabled}
-                            className={`w-full p-4 rounded-lg border-2 transition-all duration-300 flex items-center justify-between relative overflow-hidden ${isSelected ? 'border-blue-400/80 bg-white/5' : 'border-white/10 hover:border-blue-400/60'
+                            className={`w-full p-4 rounded-lg border-2 transition-all duration-300 flex items-center justify-between relative overflow-hidden ${isSelected ? 'border-cyan-400/80 bg-cyan-950/40 shadow-md shadow-cyan-950/50' : 'border-white/10 hover:border-cyan-400/60'
                               } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             {/* Background fill: goal-based */}
                             <div
-                              className="absolute left-0 top-0 bottom-0 bg-blue-500/10 transition-all duration-1000"
+                              className="absolute left-0 top-0 bottom-0 bg-cyan-500/15 transition-all duration-1000"
                               style={{ width: `${smoothWidth}%` }}
                             />
 
                             <div className="flex items-center gap-3 relative z-10">
-                              <div className={`w-5 h-5 rounded-full border-2 ${isSelected ? 'border-blue-400 bg-blue-500' : 'border-gray-400 bg-transparent'
+                              <div className={`w-5 h-5 rounded-full border-2 ${isSelected ? 'border-cyan-400 bg-cyan-500' : 'border-gray-400 bg-transparent'
                                 }`}></div>
                               <span className="font-semibold text-white">{opt.text}</span>
                             </div>
@@ -496,7 +471,7 @@ const Voting = () => {
                               <span className="text-sm font-bold text-white block">
                                 {displayedVotes}
                               </span>
-                              <span className="text-[10px] text-gray-400">
+                              <span className="text-[10px] text-cyan-200/70">
                                 Total votes
                               </span>
                             </div>
@@ -508,7 +483,7 @@ const Voting = () => {
                               initial={{ width: 0 }}
                               animate={{ width: `${smoothWidth}%` }}
                               transition={{ duration: 0.8, ease: 'easeOut' }}
-                              className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                              className="h-full bg-gradient-to-r from-[#086a7e] to-[#0ea5e9]"
                             />
                           </div>
                         </div>
@@ -516,7 +491,7 @@ const Voting = () => {
                     })}
                   </div>
                   <div className="mt-4 text-xs text-gray-300">
-                    Your remaining in this round: <span className="text-white font-bold">{getVoteRights(vote).remaining}</span> of <span className="text-white font-bold">{getVoteRights(vote).total}</span>
+                    Your remaining in this round: <span className="text-cyan-300 font-bold">{getVoteRights(vote).remaining}</span> of <span className="text-cyan-300 font-bold">{getVoteRights(vote).total}</span>
                   </div>
                   <div className="mt-4 flex items-center justify-end gap-3">
                     <button
@@ -524,10 +499,12 @@ const Voting = () => {
                       disabled={selectedOptions[vote.id] == null || vote.status !== 'active' || (
                         getVoteRights(vote).remaining <= 0
                       )}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-blue-700 hover:to-purple-700 transition-colors duration-200"
+                      className="px-5 py-2.5 bg-gradient-to-r from-[#086a7e] to-[#0e7490] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-[#097d95] hover:to-[#0891b2] shadow-md shadow-cyan-950/50 transition-all duration-200 font-semibold"
                     >
                       Submit Vote
                     </button>
+
+
                   </div>
                 </motion.div>
               ))}

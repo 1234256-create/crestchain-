@@ -14,7 +14,12 @@ import Voting from './pages/Voting';
 import Referral from './pages/Referral';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Terms from './pages/Terms';
+import ContactUs from './pages/ContactUs';
 import WhitePaper from './pages/WhitePaper';
+import ArticleDetail from './pages/ArticleDetail';
+import ScamAlertsResourcePage from './pages/resources/ScamAlertsResourcePage';
+import RefundProgramsResourcePage from './pages/resources/RefundProgramsResourcePage';
+import HowRefundsResourcePage from './pages/resources/HowRefundsResourcePage';
 import JoinNotice from './pages/JoinNotice';
 import JoinDetails from './pages/JoinDetails';
 import JoinContact from './pages/JoinContact';
@@ -46,8 +51,8 @@ const ProtectedRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -66,8 +71,8 @@ const PublicRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -84,10 +89,10 @@ const PublicRoute = ({ children }) => {
 // Layout Component
 const Layout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a] flex flex-col">
       <Navbar />
-      <main className="pt-16">
-        <div className="mobile-padding w-full">
+      <main className="pt-16 flex-1">
+        <div className="w-full">
           {children}
         </div>
       </main>
@@ -98,6 +103,27 @@ const Layout = ({ children }) => {
 
 
 
+
+const ScrollToTop = () => {
+  const { pathname, search } = useLocation();
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [pathname, search]);
+  return null;
+};
+
+const ReferralTracker = () => {
+  const location = useLocation();
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      localStorage.setItem('landingReferralCode', ref);
+    }
+  }, [location]);
+  return null;
+};
+
 function App() {
   return (
     <OwnerAuthProvider>
@@ -105,6 +131,8 @@ function App() {
         <AdminAuthProvider>
           <WebSocketProvider>
             <Router>
+              <ScrollToTop />
+              <ReferralTracker />
               <div className="App">
                 <Routes>
                   {/* Public Routes */}
@@ -144,9 +172,38 @@ function App() {
                   />
                   <Route
                     path="/whitepaper"
+                    element={<Navigate to="/" replace />}
+                  />
+
+                  <Route
+                    path="/articles/:slug"
                     element={
                       <Layout>
-                        <WhitePaper />
+                        <ArticleDetail />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/resources/scam-alerts"
+                    element={
+                      <Layout>
+                        <ScamAlertsResourcePage />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/resources/refund-programs"
+                    element={
+                      <Layout>
+                        <RefundProgramsResourcePage />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/resources/how-refunds-work"
+                    element={
+                      <Layout>
+                        <HowRefundsResourcePage />
                       </Layout>
                     }
                   />
@@ -155,6 +212,14 @@ function App() {
                     element={
                       <Layout>
                         <Terms />
+                      </Layout>
+                    }
+                  />
+                  <Route
+                    path="/contact"
+                    element={
+                      <Layout>
+                        <ContactUs />
                       </Layout>
                     }
                   />

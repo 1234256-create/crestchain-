@@ -76,6 +76,8 @@ router.post(
   }
 );
 
+const { readCollection, writeCollection } = require('../utils/localStore');
+
 router.post('/forgot-otp', [
   body('email').isEmail().normalizeEmail()
 ], async (req, res) => {
@@ -84,16 +86,54 @@ router.post('/forgot-otp', [
     if (!errors.isEmpty()) {
       return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
     }
-    const { email } = req.body;
-    const user = await User.findOne({ email });
+    const email = String(req.body.email || '').trim().toLowerCase();
+
+    // Check MongoDB and localStore for user
+    let user = null;
+    try {
+      user = await User.findOne({ email });
+    } catch (err) {
+      console.warn('DB search user error in forgot-otp:', err.message);
+    }
+
+    if (!user) {
+      const localUsers = readCollection('users') || [];
+      const localUser = localUsers.find(u => String(u.email || '').toLowerCase() === email);
+      if (localUser) {
+        user = {
+          _id: localUser.id || localUser._id || 'local_' + Date.now(),
+          email: localUser.email,
+          firstName: localUser.firstName || localUser.name || 'User'
+        };
+      }
+    }
+
     if (!user) {
       return res.status(404).json({ success: false, message: 'User with that email does not exist' });
     }
-    const code = (Math.floor(100000 + Math.random() * 900000)).toString();
-    const hash = await bcrypt.hash(code, 12);
-    const expiresAt = Date.now() + 10 * 60 * 1000;
-    await Settings.setSetting(`USER_PASSWORD_OTP:${email}`, { hash, expiresAt }, user._id, 'User password OTP');
 
+    const code = (Math.floor(100000 + Math.random() * 900000)).toString();
+    const hash = await bcrypt.hash(code, 10);
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 mins
+
+    // Store in DB Settings
+    try {
+      await Settings.setSetting(`USER_PASSWORD_OTP:${email}`, { hash, expiresAt }, user._id || 'system', 'User password OTP');
+    } catch (err) {
+      console.warn('Settings setSetting error in forgot-otp:', err.message);
+    }
+
+    // Always store in localStore otps.json as backup
+    try {
+      const otps = readCollection('otps') || [];
+      const filtered = otps.filter(o => String(o.email).toLowerCase() !== email);
+      filtered.push({ email, hash, expiresAt });
+      writeCollection('otps', filtered);
+    } catch (err) {
+      console.warn('otps.json write error in forgot-otp:', err.message);
+    }
+
+    // Dispatch email
     const { sendOTPEmail } = require('../services/emailService');
     await sendOTPEmail({
       email: user.email,
@@ -102,9 +142,10 @@ router.post('/forgot-otp', [
       type: 'Password Reset'
     });
 
-    res.json({ success: true, message: 'OTP sent' });
+    res.json({ success: true, message: 'OTP sent to your email' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error('Forgot OTP error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to send OTP' });
   }
 });
 
@@ -118,28 +159,76 @@ router.post('/reset-otp', [
     if (!errors.isEmpty()) {
       return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
     }
-    const { email, otp, newPassword } = req.body;
-    const rec = await Settings.getSetting(`USER_PASSWORD_OTP:${email}`);
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const otp = String(req.body.otp || '').trim();
+    const { newPassword } = req.body;
+
+    // Get OTP record from DB Settings or localStore otps.json
+    let rec = null;
+    try {
+      rec = await Settings.getSetting(`USER_PASSWORD_OTP:${email}`);
+    } catch (err) {
+      console.warn('Settings getSetting error in reset-otp:', err.message);
+    }
+
     if (!rec || !rec.hash || !rec.expiresAt) {
-      return res.status(400).json({ success: false, message: 'OTP not requested' });
+      const otps = readCollection('otps') || [];
+      const found = otps.find(o => String(o.email).toLowerCase() === email);
+      if (found) rec = found;
+    }
+
+    if (!rec || !rec.hash || !rec.expiresAt) {
+      return res.status(400).json({ success: false, message: 'OTP not requested or expired' });
     }
     if (Date.now() > rec.expiresAt) {
-      return res.status(400).json({ success: false, message: 'OTP expired' });
+      return res.status(400).json({ success: false, message: 'OTP expired. Please request a new one.' });
     }
     const valid = await bcrypt.compare(otp, rec.hash);
     if (!valid) {
-      return res.status(400).json({ success: false, message: 'Invalid OTP' });
+      return res.status(400).json({ success: false, message: 'Invalid OTP code' });
     }
-    let user = await User.findOne({ email }).select('+password');
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Update password in DB User
+    let updated = false;
+    try {
+      let user = await User.findOne({ email }).select('+password');
+      if (user) {
+        user.password = newPassword;
+        await user.save();
+        updated = true;
+      }
+    } catch (err) {
+      console.warn('DB User password update error in reset-otp:', err.message);
     }
-    user.password = newPassword;
-    await user.save();
-    await Settings.setSetting(`USER_PASSWORD_OTP:${email}`, { hash: '', expiresAt: 0 }, user._id, 'User password OTP cleared');
-    res.json({ success: true, message: 'Password updated' });
+
+    // Always update password in localStore users.json
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const localUsers = readCollection('users') || [];
+    const localIdx = localUsers.findIndex(u => String(u.email || '').toLowerCase() === email);
+    if (localIdx !== -1) {
+      localUsers[localIdx].password = hashedPassword;
+      writeCollection('users', localUsers);
+      updated = true;
+    }
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: 'User account not found' });
+    }
+
+    // Clear OTP from DB and localStore
+    try {
+      await Settings.setSetting(`USER_PASSWORD_OTP:${email}`, { hash: '', expiresAt: 0 }, 'system', 'User password OTP cleared');
+    } catch (_) {}
+    try {
+      const otps = readCollection('otps') || [];
+      const cleanOtps = otps.filter(o => String(o.email).toLowerCase() !== email);
+      writeCollection('otps', cleanOtps);
+    } catch (_) {}
+
+    res.json({ success: true, message: 'Password updated successfully! You can now log in.' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error('Reset OTP error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Server error' });
   }
 });
 

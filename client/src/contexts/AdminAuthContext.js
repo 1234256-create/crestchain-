@@ -13,9 +13,26 @@ export const useAdminAuth = () => {
 };
 
 export const AdminAuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [admin, setAdmin] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const adminData = localStorage.getItem('adminData');
+      return Boolean(token && adminData);
+    } catch (_) {
+      return false;
+    }
+  });
+
+  const [admin, setAdmin] = useState(() => {
+    try {
+      const adminData = localStorage.getItem('adminData');
+      return adminData ? JSON.parse(adminData) : null;
+    } catch (_) {
+      return null;
+    }
+  });
+
+  const [loading, setLoading] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
 
@@ -33,11 +50,12 @@ export const AdminAuthProvider = ({ children }) => {
         const parsedAdmin = JSON.parse(adminData);
         setAdmin(parsedAdmin);
         setIsAuthenticated(true);
-        // Skip server-side token verification on refresh to avoid unintended logout
+      } else {
+        setIsAuthenticated(false);
+        setAdmin(null);
       }
     } catch (error) {
       console.error('Error checking admin auth status:', error);
-      // Do not force logout on refresh errors
     } finally {
       setLoading(false);
     }
@@ -46,7 +64,6 @@ export const AdminAuthProvider = ({ children }) => {
   useEffect(() => {
     checkAuthStatus();
   }, [checkAuthStatus]);
-
 
   const login = async (username, password) => {
     try {
@@ -98,9 +115,9 @@ export const AdminAuthProvider = ({ children }) => {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 && error.config?.url?.includes('/api/admin/')) {
           const msg = error.response?.data?.message || '';
-          if (msg.includes('User not found') || msg.includes('authorization denied') || msg.includes('Invalid token')) {
+          if (msg.includes('Invalid token') || msg.includes('Token expired') || msg.includes('authorization denied')) {
             logout();
           }
         }

@@ -148,7 +148,7 @@ const Register = () => {
             </p>
           </div>
           <div className="mt-6 pt-6 border-t border-white/10">
-            <Link to="/login" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+            <Link to="/login" className="text-teal-400 hover:text-teal-300 font-medium transition-colors">
               Return to Login
             </Link>
           </div>
@@ -161,12 +161,8 @@ const Register = () => {
     <div className="min-h-screen hero-gradient flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="absolute inset-0 bg-black/20"></div>
 
-      {/* Background Elements */}
-      <div className="absolute top-20 left-10 w-20 h-20 bg-purple-500/20 rounded-full animate-float"></div>
-      <div className="absolute top-40 right-20 w-16 h-16 bg-blue-500/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
-      <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-yellow-500/20 rounded-full animate-float" style={{ animationDelay: '4s' }}></div>
-
       <motion.div
+
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
@@ -196,7 +192,7 @@ const Register = () => {
                     required
                     value={formData.firstName}
                     onChange={handleChange}
-                    className={`input-field pl-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-purple-500 ${isAutoFilled ? 'cursor-not-allowed opacity-90' : ''} ${serverErrors.some(e => e.path === 'firstName') ? 'border-red-500' : ''}`}
+                    className={`input-field pl-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500 ${isAutoFilled ? 'cursor-not-allowed opacity-90' : ''} ${serverErrors.some(e => e.path === 'firstName') ? 'border-red-500' : ''}`}
                     placeholder="First name"
                     readOnly={isAutoFilled}
                   />
@@ -217,7 +213,7 @@ const Register = () => {
                   required
                   value={formData.lastName}
                   onChange={handleChange}
-                  className={`input-field bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-purple-500 ${isAutoFilled ? 'cursor-not-allowed opacity-90' : ''} ${formData.lastName && formData.lastName.trim().length < 2 ? 'border-red-500' : ''} ${serverErrors.some(e => e.path === 'lastName') ? 'border-red-500' : ''}`}
+                  className={`input-field bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500 ${isAutoFilled ? 'cursor-not-allowed opacity-90' : ''} ${formData.lastName && formData.lastName.trim().length < 2 ? 'border-red-500' : ''} ${serverErrors.some(e => e.path === 'lastName') ? 'border-red-500' : ''}`}
                   placeholder="Last name"
                   readOnly={isAutoFilled}
                 />
@@ -245,7 +241,7 @@ const Register = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className={`input-field pl-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-purple-500 ${emailLocked ? 'cursor-not-allowed opacity-90' : ''}`}
+                  className={`input-field pl-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500 ${emailLocked ? 'cursor-not-allowed opacity-90' : ''}`}
                   readOnly={emailLocked}
                   placeholder="Enter your email"
                 />
@@ -273,7 +269,7 @@ const Register = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className={`input-field pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-purple-500 ${serverErrors.some(e => e.path === 'password') ? 'border-red-500' : ''}`}
+                  className={`input-field pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500 ${serverErrors.some(e => e.path === 'password') ? 'border-red-500' : ''}`}
                   placeholder="Create a password"
                 />
                 <button
@@ -331,7 +327,7 @@ const Register = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`input-field pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-purple-500 ${formData.confirmPassword && !passwordsMatch ? 'border-red-500' : ''
+                  className={`input-field pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500 ${formData.confirmPassword && !passwordsMatch ? 'border-red-500' : ''
                     } ${serverErrors.some(e => e.path === 'confirmPassword') ? 'border-red-500' : ''}`}
                   placeholder="Confirm your password"
                 />
@@ -359,15 +355,15 @@ const Register = () => {
                 type="checkbox"
                 checked={acceptTerms}
                 onChange={(e) => setAcceptTerms(e.target.checked)}
-                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                className="h-4 w-4 text-purple-600 focus:ring-teal-500 border-gray-300 rounded"
               />
               <label htmlFor="accept-terms" className="ml-2 block text-sm text-gray-300">
                 I accept the{' '}
-                <Link to="/privacy" className="text-purple-400 hover:text-purple-300">
+                <Link to="/privacy" className="text-teal-400 hover:text-teal-300">
                   Privacy Policy
                 </Link>{' '}
                 and{' '}
-                <Link to="/terms" className="text-purple-400 hover:text-purple-300">
+                <Link to="/terms" className="text-teal-400 hover:text-teal-300">
                   Terms of Service
                 </Link>
                 *
@@ -413,7 +409,7 @@ const Register = () => {
               Already have an account?{' '}
               <Link
                 to="/login"
-                className="font-medium text-purple-400 hover:text-purple-300 transition-colors"
+                className="font-medium text-teal-400 hover:text-teal-300 transition-colors"
               >
                 Log in
               </Link>

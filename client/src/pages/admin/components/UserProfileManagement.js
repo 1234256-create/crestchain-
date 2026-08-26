@@ -81,10 +81,9 @@ const ContribCard = React.memo(({ contributionPoints }) => {
 });
 
 const RealDataCard = React.memo(({ user, onLoadVoteHistory, onLoadReferrals }) => {
-  const vp = user?.realStats?.votingPoints ?? (user?.points?.voting || 0);
-  const cp = user?.realStats?.contributionPoints ?? (user?.points?.contributions || 0);
-  const rp = user?.realStats?.referralPoints ?? (user?.points?.referral || 0);
-  const total = user?.realStats?.totalPoints ?? (vp + cp + rp);
+  const vp = user?.realStats?.votingPoints ?? user?.stats?.votingPoints ?? (typeof user?.points === 'object' ? user?.points?.voting : (typeof user?.points === 'number' ? user.points : 0)) ?? 0;
+  const cp = user?.realStats?.contributionPoints ?? user?.stats?.contributionPoints ?? (typeof user?.points === 'object' ? user?.points?.contributions : 0) ?? 0;
+  const rp = user?.realStats?.referralPoints ?? user?.stats?.referralPoints ?? (typeof user?.points === 'object' ? user?.points?.referral : 0) ?? 0;
   const vLoss = user?.verifiedLoss || 0;
   const uvLoss = user?.unverifiedLoss || 0;
   const restituted = user?.amountRestituted || 0;
@@ -102,11 +101,7 @@ const RealDataCard = React.memo(({ user, onLoadVoteHistory, onLoadReferrals }) =
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <div className="rounded-lg bg-gray-50 border border-gray-200 p-3">
-          <div className="text-xs text-gray-600">Total Points</div>
-          <div className="text-xl font-bold text-gray-900">{total}</div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div
           onClick={onLoadVoteHistory}
           className="rounded-lg bg-purple-50 border border-purple-200 p-3 cursor-pointer hover:bg-purple-100 transition-colors"
@@ -299,6 +294,11 @@ const UserProfileManagement = () => {
       if (u) {
         setSelectedUser(prev => {
           const base = prev || {};
+          const realV = u.realStats?.votingPoints ?? u.stats?.votingPoints ?? (typeof base.points === 'object' ? base.points?.voting : 0) ?? 0;
+          const realC = u.realStats?.contributionPoints ?? u.stats?.contributionPoints ?? (typeof base.points === 'object' ? base.points?.contributions : 0) ?? 0;
+          const realR = u.realStats?.referralPoints ?? u.stats?.referralPoints ?? (typeof base.points === 'object' ? base.points?.referral : 0) ?? 0;
+          const realTot = u.realStats?.totalPoints ?? u.points ?? (typeof base.points === 'object' ? base.points?.total : (realV + realC + realR)) ?? 0;
+
           return {
             ...base,
             id: base.id || u._id,
@@ -310,12 +310,18 @@ const UserProfileManagement = () => {
             phone: u.phoneNumber || base.phone,
             telegramUsername: u.telegramUsername || base.telegramUsername,
             walletAddress: u.walletAddress || base.walletAddress,
+            stats: {
+              ...(base.stats || {}),
+              votingPoints: realV,
+              contributionPoints: realC,
+              referralPoints: realR
+            },
             points: {
               ...(base.points || {}),
-              total: u.points ?? (base.points?.total ?? 0),
-              voting: u.stats?.votingPoints ?? (base.points?.voting ?? 0),
-              contributions: u.stats?.contributionPoints ?? (base.points?.contributions ?? 0),
-              referral: u.stats?.referralPoints ?? (base.points?.referral ?? 0)
+              total: realTot,
+              voting: realV,
+              contributions: realC,
+              referral: realR
             },
             contributions: {
               ...(base.contributions || {}),
@@ -337,7 +343,12 @@ const UserProfileManagement = () => {
             unverifiedLoss: u.unverifiedLoss || 0,
             amountRestituted: u.amountRestituted || 0,
             rankOverride: u.overrides?.rankOverride,
-            realStats: u.realStats !== undefined ? u.realStats : base.realStats
+            realStats: u.realStats || {
+              votingPoints: realV,
+              contributionPoints: realC,
+              referralPoints: realR,
+              totalPoints: realTot
+            }
           };
         });
 
@@ -585,7 +596,8 @@ const UserProfileManagement = () => {
       const token = localStorage.getItem('adminToken');
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
       const res = await axios.get('/api/users', { params: { limit: 100, type: 'real' }, headers });
-      const apiUsers = res.data?.data?.users || [];
+      const rawUsers = res.data?.data?.users || [];
+      const apiUsers = rawUsers.filter(u => u.role !== 'admin' && u.email !== 'support@veritasaid.com');
       if (apiUsers.length > 0) {
         const mapped = apiUsers.map((u) => {
           // Apply overrides to local display
@@ -601,16 +613,22 @@ const UserProfileManagement = () => {
           const effectiveContrib = (u.stats && u.stats.contributionPoints) || 0;
           const effectiveReferral = (u.stats && u.stats.referralPoints) || 0;
 
+          const safeISO = (dVal) => {
+            if (!dVal) return new Date().toISOString();
+            const parsed = new Date(dVal);
+            return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+          };
+
           return {
             id: u._id,
             username: u.username || (u.email || '').split('@')[0],
             email: u.email,
-            fullName: u.fullName || `${u.firstName} ${u.lastName || ''}`.trim(),
+            fullName: u.fullName || `${u.firstName || ''} ${u.lastName || ''}`.trim(),
             phone: '',
-            dateOfBirth: new Date(u.createdAt).toISOString(),
+            dateOfBirth: safeISO(u.createdAt),
             address: '',
-            joinedAt: u.createdAt,
-            lastActive: u.lastLogin || u.updatedAt || u.createdAt,
+            joinedAt: u.createdAt || new Date().toISOString(),
+            lastActive: u.lastLogin || u.updatedAt || u.createdAt || new Date().toISOString(),
             status: u.isActive ? 'active' : 'suspended',
             role: u.role || 'user',
             isVerified: true,
@@ -716,7 +734,7 @@ const UserProfileManagement = () => {
         user.role,
         user.points.total,
         user.contributions.total,
-        new Date(user.lastActive).toLocaleDateString()
+        (user.lastActive && !isNaN(new Date(user.lastActive).getTime())) ? new Date(user.lastActive).toLocaleDateString() : '—'
       ])
     ].map(row => row.join(',')).join('\n');
 
@@ -977,8 +995,8 @@ const UserProfileManagement = () => {
                     <input disabled value={selectedUser.phone || ''} className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500" />
                   </div>
                   <div>
-                    <div className="flex justify-between text-sm mb-1"><span className="text-gray-600">Date of Birth (Original):</span><span className="font-medium">{new Date(selectedUser.dateOfBirth).toLocaleDateString()}</span></div>
-                    <input disabled value={new Date(selectedUser.dateOfBirth).toLocaleDateString()} className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500" />
+                    <div className="flex justify-between text-sm mb-1"><span className="text-gray-600">Date of Birth (Original):</span><span className="font-medium">{(selectedUser.dateOfBirth && !isNaN(new Date(selectedUser.dateOfBirth).getTime())) ? new Date(selectedUser.dateOfBirth).toLocaleDateString() : '—'}</span></div>
+                    <input disabled value={(selectedUser.dateOfBirth && !isNaN(new Date(selectedUser.dateOfBirth).getTime())) ? new Date(selectedUser.dateOfBirth).toLocaleDateString() : '—'} className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500" />
                   </div>
                 </div>
               </div>
@@ -1006,8 +1024,8 @@ const UserProfileManagement = () => {
                     <input disabled value={selectedUser.isVerified ? 'Verified' : 'Not Verified'} className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500" />
                   </div>
                   <div>
-                    <div className="flex justify-between text-sm mb-1"><span className="text-gray-600">Joined (Original):</span><span className="font-medium">{new Date(selectedUser.joinedAt).toLocaleDateString()}</span></div>
-                    <input disabled value={new Date(selectedUser.joinedAt).toLocaleDateString()} className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500" />
+                    <div className="flex justify-between text-sm mb-1"><span className="text-gray-600">Joined (Original):</span><span className="font-medium">{(selectedUser.joinedAt && !isNaN(new Date(selectedUser.joinedAt).getTime())) ? new Date(selectedUser.joinedAt).toLocaleDateString() : '—'}</span></div>
+                    <input disabled value={(selectedUser.joinedAt && !isNaN(new Date(selectedUser.joinedAt).getTime())) ? new Date(selectedUser.joinedAt).toLocaleDateString() : '—'} className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500" />
                   </div>
 
                 </div>
@@ -1025,12 +1043,12 @@ const UserProfileManagement = () => {
                   <Eye className="w-4 h-4 text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <div className="text-xs text-gray-600 mt-1">Total:</div>
-                <div className="text-2xl font-bold text-gray-900">{selectedUser?.points?.voting || 0}</div>
+                <div className="text-2xl font-bold text-gray-900">{selectedUser?.stats?.votingPoints ?? selectedUser?.realStats?.votingPoints ?? (typeof selectedUser?.points === 'object' ? selectedUser?.points?.voting : 0) ?? 0}</div>
               </div>
               <div className="rounded-lg bg-gradient-to-br from-blue-600/20 to-blue-700/20 p-4 border border-blue-300/30">
                 <div className="text-sm text-gray-800">Contribution Points</div>
                 <div className="text-xs text-gray-600 mt-1">Total:</div>
-                <div className="text-2xl font-bold text-gray-900">{selectedUser?.points?.contributions || 0}</div>
+                <div className="text-2xl font-bold text-gray-900">{selectedUser?.stats?.contributionPoints ?? selectedUser?.realStats?.contributionPoints ?? (typeof selectedUser?.points === 'object' ? selectedUser?.points?.contributions : 0) ?? 0}</div>
               </div>
               <div
                 onClick={loadUserReferrals}
@@ -1042,7 +1060,7 @@ const UserProfileManagement = () => {
                   <Eye className="w-4 h-4 text-green-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <div className="text-xs text-gray-600 mt-1">Total:</div>
-                <div className="text-2xl font-bold text-gray-900">{selectedUser?.points?.referral || 0}</div>
+                <div className="text-2xl font-bold text-gray-900">{selectedUser?.stats?.referralPoints ?? selectedUser?.realStats?.referralPoints ?? (selectedUser?.realStats?.referralCount ? selectedUser.realStats.referralCount * 10 : (typeof selectedUser?.points === 'object' ? selectedUser?.points?.referral : 0)) ?? 0}</div>
               </div>
             </div>
 
@@ -1059,12 +1077,6 @@ const UserProfileManagement = () => {
 
         return (
           <div className="space-y-6">
-            <div className="text-center bg-purple-50 p-6 rounded-lg">
-              <div className="text-sm text-gray-600 mb-2">Total Points</div>
-              <div className="text-4xl font-bold text-gray-900">{totalPointsText}</div>
-              <div className="text-gray-500 text-sm">Live points from user activity</div>
-            </div>
-
             <div className="grid grid-cols-1 gap-6">
               <RealDataCard user={selectedUser} onLoadVoteHistory={loadVoteHistory} onLoadReferrals={loadUserReferrals} />
             </div>
@@ -1499,7 +1511,7 @@ const UserProfileManagement = () => {
                         <p className="text-sm text-gray-500">{reqRef.email}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-400">{new Date(reqRef.createdAt || Date.now()).toLocaleDateString()}</p>
+                        <p className="text-xs text-gray-400">{(reqRef.createdAt && !isNaN(new Date(reqRef.createdAt).getTime())) ? new Date(reqRef.createdAt).toLocaleDateString() : '—'}</p>
                         <span className={`inline-block mt-1 px-2 py-0.5 text-[10px] font-medium uppercase rounded ${reqRef.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>
                           {reqRef.status === 'active' ? 'Active' : 'Inactive'}
                         </span>
@@ -1575,7 +1587,7 @@ const UserProfileManagement = () => {
                               Timestamp
                             </span>
                             <span className="text-xs font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                              {new Date(v.votedAt).toLocaleString()}
+                              {(v.votedAt && !isNaN(new Date(v.votedAt).getTime())) ? new Date(v.votedAt).toLocaleString() : '—'}
                             </span>
                           </div>
                         </div>

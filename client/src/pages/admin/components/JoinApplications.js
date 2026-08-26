@@ -204,12 +204,12 @@ const JoinApplications = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {app.hasAccount ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {(app.hasAccount || app.status === 'registered' || app.status === 'accepted') ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
                         ✓ Registered
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
                         Pending
                       </span>
                     )}
@@ -217,13 +217,14 @@ const JoinApplications = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        onClick={() => !app.hasAccount && sendInviteEmail(app)}
-                        disabled={app.hasAccount}
-                        className={`p-2 rounded-full transition-colors duration-200 ${app.hasAccount
-                          ? 'text-gray-400 bg-gray-100 cursor-not-allowed opacity-50'
-                          : 'text-green-600 bg-green-100 hover:bg-green-200 cursor-pointer'
-                          }`}
-                        title={app.hasAccount ? 'Account already registered — invite not needed' : 'Send Invitation Email'}
+                        onClick={() => !(app.hasAccount || app.status === 'registered' || app.status === 'accepted') && sendInviteEmail(app)}
+                        disabled={app.hasAccount || app.status === 'registered' || app.status === 'accepted'}
+                        className={`p-2 rounded-full transition-colors duration-200 ${
+                          (app.hasAccount || app.status === 'registered' || app.status === 'accepted')
+                            ? 'text-gray-300 bg-gray-100 cursor-not-allowed opacity-40'
+                            : 'text-green-600 bg-green-100 hover:bg-green-200 cursor-pointer'
+                        }`}
+                        title={(app.hasAccount || app.status === 'registered' || app.status === 'accepted') ? 'Account already registered — invitation email disabled' : 'Send Invitation Email'}
                       >
                         <Mail className="w-5 h-5" />
                       </button>

@@ -43,7 +43,7 @@ export function setUsersMap(map) {
 
 export function getUsersList() {
   const map = getUsersMap();
-  return Object.values(map);
+  return Object.values(map).filter(u => u.role !== 'admin' && u.email !== 'support@veritasaid.com');
 }
 
 export function addOrUpdateUser(user) {
@@ -267,12 +267,13 @@ export function getDashboardStats() {
   const users = getUsersList();
   const receipts = getReceipts();
   const votes = getVotes();
+  const baseCount = 13780;
   const totalPoints = getAllPoints().reduce((sum, p) => sum + (p.points || 0), 0);
   const pendingContributions = receipts.filter((r) => !r.verified).length;
   const activeVotes = votes.filter((v) => v.status === 'active').length;
   const totalVotesSubmitted = votes.reduce((sum, v) => sum + (v.totalVotes || 0), 0);
   return {
-    totalUsers: users.length,
+    totalUsers: baseCount + users.length,
     activeVotes,
     totalPoints,
     totalVotesSubmitted,

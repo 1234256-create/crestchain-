@@ -1,5 +1,9 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { body, validationResult, query } = require('express-validator');
+const { readCollection, writeCollection } = require('../utils/localStore');
+
+
 const User = require('../models/User');
 const { auth, adminAuth, ownerOrAdmin } = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
@@ -61,53 +65,80 @@ router.post('/', adminAuth, [
       return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
-    // Check if user exists
-    let user = await User.findOne({ email: userEmail });
-    if (user) {
-      return res.status(400).json({ success: false, message: 'User already exists' });
+    // Check if user exists in DB or localStore
+    let user = null;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        user = await User.findOne({ email: userEmail });
+      } catch (dbErr) {
+        console.warn('User DB check warning:', dbErr.message);
+      }
+    }
+    const existingLocal = (readCollection('users') || []).find(u => u.email && u.email.toLowerCase() === String(userEmail).toLowerCase());
+    if (user || existingLocal) {
+      return res.status(400).json({ success: false, message: 'User with this email already exists' });
     }
 
-    user = new User({
+    if (mongoose.connection.readyState === 1) {
+      try {
+        user = new User({
+          firstName,
+          lastName,
+          email: userEmail,
+          password: userPassword,
+          isVirtual: !!isVirtual,
+          votingRights: votingRights !== undefined ? Number(votingRights) : 1,
+          points: Number(points) || 0, 
+          isActive: true
+        });
+
+        await user.save();
+
+        if (points !== undefined && points > 0) {
+          user.stats.votingPoints = Number(points) || 0;
+          await user.save();
+        }
+      } catch (dbErr) {
+        console.warn('User DB save error, fallback to localStore:', dbErr.message);
+        user = null;
+      }
+    }
+
+    const userId = user ? user._id : 'usr_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const localUserObj = {
+      _id: userId,
+      id: userId,
       firstName,
       lastName,
       email: userEmail,
-      password: userPassword,
       isVirtual: !!isVirtual,
+      points: points || 0,
       votingRights: votingRights !== undefined ? votingRights : 1,
-      points: 0, // Base points are 0, we'll add initial points via overrides if needed
-      isActive: true
-    });
+      role: 'user',
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(userPassword, salt);
-
-    await user.save();
-
-    // If initial points provided, add them via overrides
-    if (points !== undefined && points > 0) {
-      user.overrides = user.overrides || {};
-      user.overrides.pointsOffset = points;
-      user.markModified('overrides');
-      await user.save();
-    }
+    const localUsers = readCollection('users');
+    localUsers.unshift(localUserObj);
+    writeCollection('users', localUsers);
 
     res.json({
       success: true,
       data: {
         user: {
-          id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          isVirtual: user.isVirtual,
+          id: userId,
+          firstName: firstName,
+          lastName: lastName,
+          email: userEmail,
+          isVirtual: !!isVirtual,
           points: points || 0,
-          votingRights: user.votingRights
+          votingRights: votingRights !== undefined ? votingRights : 1
         }
       }
     });
 
-    try { global.__broadcastUsersUpdate({ type: 'user_created', id: user._id }); } catch (_) { }
+    try { global.__broadcastUsersUpdate({ type: 'user_created', id: userId }); } catch (_) { }
 
   } catch (error) {
     console.error('Create user error:', error);
@@ -138,21 +169,21 @@ router.get('/', adminAuth, [
   query('role')
     .optional()
     .isIn(['user', 'moderator', 'admin'])
-    .withMessage('Role must be user, moderator, or admin'),
+    .withMessage('Invalid role'),
 
   query('status')
     .optional()
     .isIn(['active', 'inactive'])
-    .withMessage('Status must be active or inactive'),
+    .withMessage('Invalid status'),
 
   query('type')
     .optional()
-    .isIn(['all', 'real', 'virtual'])
-    .withMessage('Type must be all, real, or virtual'),
+    .isIn(['real', 'virtual', 'all'])
+    .withMessage('Invalid user type'),
 
   query('sortBy')
     .optional()
-    .isIn(['createdAt', 'firstName', 'lastName', 'email', 'points.total', 'lastLogin'])
+    .isIn(['firstName', 'lastName', 'email', 'points', 'votingRights', 'createdAt'])
     .withMessage('Invalid sort field'),
 
   query('sortOrder')
@@ -161,7 +192,6 @@ router.get('/', adminAuth, [
     .withMessage('Sort order must be asc or desc')
 ], async (req, res) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -182,9 +212,7 @@ router.get('/', adminAuth, [
       sortOrder = 'desc'
     } = req.query;
 
-    // Build filter object
     const filter = {};
-
     if (search) {
       filter.$or = [
         { firstName: { $regex: search, $options: 'i' } },
@@ -192,39 +220,107 @@ router.get('/', adminAuth, [
         { email: { $regex: search, $options: 'i' } }
       ];
     }
-
-    if (role) {
+    if (role && role !== 'all') {
       filter.role = role;
     }
+    if (status) filter.isActive = status === 'active';
+    if (type === 'real') filter.isVirtual = { $ne: true };
+    else if (type === 'virtual') filter.isVirtual = true;
 
-    if (status) {
-      filter.isActive = status === 'active';
-    }
-
-    if (type === 'real') {
-      filter.isVirtual = { $ne: true };
-    } else if (type === 'virtual') {
-      filter.isVirtual = true;
-    }
-
-    // Build sort object
     const sort = {};
     sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
-
-    // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Get users with pagination
-    const users = await User.find(filter)
-      .select('-password')
-      .populate('referredBy', 'firstName lastName')
-      .sort(sort)
-      .skip(skip)
-      .limit(parseInt(limit));
+    let users = [];
+    let total = 0;
 
-    // Get total count for pagination
-    const total = await User.countDocuments(filter);
-    const totalPages = Math.ceil(total / parseInt(limit));
+    if (mongoose.connection.readyState === 1) {
+      try {
+        users = await User.find(filter)
+          .select('-password')
+          .populate('referredBy', 'firstName lastName')
+          .sort(sort)
+          .skip(skip)
+          .limit(parseInt(limit));
+        total = await User.countDocuments(filter);
+      } catch (dbErr) {
+        console.warn('User.find error in GET /api/users:', dbErr.message);
+      }
+    }
+
+    if (!users || users.length === 0) {
+      let localUsers = readCollection('users');
+      if (!role || role !== 'admin') {
+        localUsers = localUsers.filter((u) => u.role !== 'admin' && u.email !== 'support@veritasaid.com');
+      }
+      if (type === 'virtual') {
+        localUsers = localUsers.filter((u) => u.isVirtual === true);
+      } else if (type === 'real') {
+        localUsers = localUsers.filter((u) => u.isVirtual !== true);
+      }
+      if (search) {
+        const s = search.toLowerCase();
+        localUsers = localUsers.filter(
+          (u) =>
+            (u.firstName && u.firstName.toLowerCase().includes(s)) ||
+            (u.lastName && u.lastName.toLowerCase().includes(s)) ||
+            (u.email && u.email.toLowerCase().includes(s))
+        );
+      }
+      total = localUsers.length;
+      users = localUsers.slice(skip, skip + parseInt(limit));
+    }
+
+    const totalPages = Math.ceil(total / parseInt(limit)) || 1;
+
+    // Attach realStats & sync referral points for every user in the list
+    users = await Promise.all(users.map(async (uDoc) => {
+      const uObj = (typeof uDoc.toObject === 'function') ? uDoc.toObject() : { ...uDoc };
+      try {
+        if (typeof uDoc.calculateRealStats === 'function') {
+          uObj.realStats = await uDoc.calculateRealStats();
+        } else {
+          const uidStr = String(uObj._id || uObj.id || '');
+          const refCode = uObj.referralCode;
+          const countedEmails = new Set();
+
+          const allLocalUsers = readCollection('users') || [];
+          allLocalUsers.forEach(lu => {
+            if (lu.email && (String(lu.referredBy || '') === uidStr || (refCode && lu.referralCode === refCode && String(lu._id || lu.id) !== uidStr))) {
+              countedEmails.add(lu.email.toLowerCase());
+            }
+          });
+
+          if (refCode) {
+            const allLocalApps = readCollection('applications') || [];
+            allLocalApps.forEach(la => {
+              if (la.email && la.referralCode === refCode) {
+                countedEmails.add(la.email.toLowerCase());
+              }
+            });
+          }
+
+          const refCount = countedEmails.size;
+          const refPts = refCount * 10;
+          uObj.realStats = {
+            votingPoints: uObj.stats?.votingPoints || 0,
+            contributionPoints: uObj.stats?.contributionPoints || 0,
+            referralPoints: Math.max(uObj.stats?.referralPoints || 0, refPts),
+            totalPoints: (uObj.stats?.votingPoints || 0) + (uObj.stats?.contributionPoints || 0) + Math.max(uObj.stats?.referralPoints || 0, refPts),
+            referralCount: refCount
+          };
+        }
+
+        if (uObj.realStats) {
+          uObj.stats = uObj.stats || {};
+          uObj.stats.votingPoints = Math.max(uObj.stats.votingPoints || 0, uObj.realStats.votingPoints);
+          uObj.stats.contributionPoints = Math.max(uObj.stats.contributionPoints || 0, uObj.realStats.contributionPoints);
+          uObj.stats.referralPoints = Math.max(uObj.stats.referralPoints || 0, uObj.realStats.referralPoints);
+          uObj.points = Math.max(uObj.points || 0, uObj.realStats.totalPoints);
+        }
+      } catch (_) {}
+      return uObj;
+    }));
 
     res.json({
       success: true,
@@ -244,83 +340,148 @@ router.get('/', adminAuth, [
 
   } catch (error) {
     console.error('Get users error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching users'
+    const localUsers = readCollection('users');
+    res.json({
+      success: true,
+      data: {
+        users: localUsers,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalUsers: localUsers.length,
+          hasNextPage: false,
+          hasPrevPage: false
+        }
+      }
     });
   }
 });
+
+// Helper to get unified ranked users across DB and localStore
+async function getUnifiedRankedUsers() {
+  let allUsers = [];
+  if (mongoose.connection.readyState === 1) {
+    try {
+      allUsers = await User.find({
+        isActive: true,
+        role: { $ne: 'admin' },
+        email: { $ne: 'support@veritasaid.com' }
+      }).lean();
+    } catch (dbErr) {
+      console.warn('getUnifiedRankedUsers DB find error:', dbErr.message);
+    }
+  }
+
+  const localList = readCollection('users') || [];
+  localList.forEach(lu => {
+    if (lu.isActive !== false && lu.role !== 'admin' && lu.email !== 'support@veritasaid.com') {
+      const exists = allUsers.some(u =>
+        String(u._id || u.id) === String(lu._id || lu.id) ||
+        (u.email && lu.email && u.email.toLowerCase() === lu.email.toLowerCase())
+      );
+      if (!exists) {
+        allUsers.push(lu);
+      }
+    }
+  });
+
+  const processed = allUsers.map(u => {
+    const rawTotal = Number(u.points || 0);
+    const offset = Number(u.overrides?.pointsOffset || 0);
+    const effectiveTotal = Math.max(0, rawTotal + offset);
+    const statsOffsets = u.overrides?.statsOffsets || {};
+
+    const rawVoting = Number(u.stats?.votingPoints || 0);
+    const rawContrib = Number(u.stats?.contributionPoints || 0);
+    const rawReferral = Number(u.stats?.referralPoints || 0);
+
+    return {
+      _id: String(u._id || u.id || u.email),
+      firstName: u.firstName,
+      lastName: u.lastName,
+      email: u.email,
+      points: effectiveTotal,
+      stats: {
+        votingPoints: Math.max(0, rawVoting + Number(statsOffsets.votingPoints || 0)),
+        contributionPoints: Math.max(0, rawContrib + Number(statsOffsets.contributionPoints || 0)),
+        referralPoints: Math.max(0, rawReferral + Number(statsOffsets.referralPoints || 0)),
+        totalVotes: u.stats?.totalVotes || 0,
+        totalContributions: u.stats?.totalContributions || 0,
+      },
+      isVirtual: !!u.isVirtual,
+      createdAt: u.createdAt || new Date().toISOString(),
+      lastLogin: u.lastLogin,
+      overrides: u.overrides || {}
+    };
+  });
+
+  // Sort strictly by points desc, createdAt asc, email asc
+  processed.sort((a, b) => {
+    if (b.points !== a.points) {
+      return b.points - a.points;
+    }
+    const timeA = new Date(a.createdAt || 0).getTime();
+    const timeB = new Date(b.createdAt || 0).getTime();
+    if (timeA !== timeB) {
+      return timeA - timeB;
+    }
+    return (a.email || '').localeCompare(b.email || '');
+  });
+
+  // Assign ranks starting at 1 (or rankOverride if specified)
+  return processed.map((u, i) => {
+    const rank = (u.overrides?.rankOverride !== undefined && u.overrides?.rankOverride !== null)
+      ? Number(u.overrides.rankOverride)
+      : (i + 1);
+    return {
+      ...u,
+      rank
+    };
+  });
+}
 
 // @route   GET /api/users/leaderboard
 // @desc    Get user leaderboard
 // @access  Public
 router.get('/leaderboard', async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const { page = 1, limit = 50, type = 'total' } = req.query;
+    const limitNum = Math.min(parseInt(limit) || 50, 6000);
+    const pageNum = parseInt(page) || 1;
+    const skip = (pageNum - 1) * limitNum;
 
-    // Use aggregation to sort by effective points (base points + offset)
-    const users = await User.aggregate([
-      { $match: { isActive: true } },
-      {
-        $addFields: {
-          effectivePoints: {
-            $max: [0, { $add: ["$points", { $ifNull: ["$overrides.pointsOffset", 0] }] }]
-          }
-        }
-      },
-      { $sort: { effectivePoints: -1, firstName: 1 } },
-      { $skip: skip },
-      { $limit: parseInt(limit) },
-      {
-        $project: {
-          _id: 1,
-          firstName: 1,
-          lastName: 1,
-          email: 1,
-          points: "$effectivePoints",
-          stats: {
-            votingPoints: { $max: [0, { $add: ["$stats.votingPoints", { $ifNull: ["$overrides.statsOffsets.votingPoints", 0] }] }] },
-            contributionPoints: { $max: [0, { $add: ["$stats.contributionPoints", { $ifNull: ["$overrides.statsOffsets.contributionPoints", 0] }] }] },
-            referralPoints: { $max: [0, { $add: ["$stats.referralPoints", { $ifNull: ["$overrides.statsOffsets.referralPoints", 0] }] }] },
-            totalVotes: 1,
-            totalContributions: 1
-          },
-          isVirtual: 1,
-          createdAt: 1,
-          lastLogin: 1,
-          overrides: {
-            rankOverride: 1
-          }
-        }
-      }
-    ]);
+    const rankedUsers = await getUnifiedRankedUsers();
+    const count = rankedUsers.length;
+    const paginatedUsers = rankedUsers.slice(skip, skip + limitNum);
 
-    const count = await User.countDocuments({ isActive: true });
-    const baselineTotal = count + 6000;
+    let baseCount = 13780;
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const Settings = require('../models/Settings');
+        const b = await Settings.getSetting('BASE_USER_COUNT');
+        if (b) baseCount = Number(b);
+      } catch (_) {}
+    }
+
+    const baselineTotal = count + baseCount;
     const activeUsersBaseline = Math.floor(baselineTotal * 0.85);
-
-    // Attach the explicit rank to each user (starts from 5000)
-    const usersWithRank = users.map((u, i) => ({
-      ...u,
-      rank: 5000 + skip + i
-    }));
 
     res.json({
       success: true,
       data: {
-        users: usersWithRank,
+        users: paginatedUsers,
         totalUsers: baselineTotal,
         activeUsers: activeUsersBaseline,
-        page: parseInt(page),
-        totalPages: Math.ceil(count / parseInt(limit))
-      }
+        page: pageNum,
+        totalPages: Math.ceil(count / limitNum) || 1,
+      },
     });
   } catch (error) {
     console.error('Get leaderboard error:', error);
-    res.status(500).json({ success: false, message: 'Server error while fetching leaderboard' });
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
 
 // @route   GET /api/users/:userId/referrals
 // @desc    Get referrals for a user (self or admin)
@@ -341,28 +502,82 @@ router.get('/:userId/referrals', ownerOrAdmin('userId'), [
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const filter = { referredBy: userId };
-    const total = await User.countDocuments(filter);
-    const docs = await User.find(filter)
-      .select('firstName lastName email createdAt referralCode isActive')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    let userObj = null;
+    if (mongoose.connection.readyState === 1) {
+      try { userObj = await User.findById(userId); } catch (_) {}
+    }
+    const localUsers = readCollection('users') || [];
+    if (!userObj) {
+      userObj = localUsers.find(u => String(u._id || u.id) === String(userId));
+    }
+    const userRefCode = userObj?.referralCode;
 
-    const referrals = docs.map((u) => ({
-      id: u._id,
-      firstName: u.firstName,
-      lastName: u.lastName,
-      email: u.email,
-      referralCode: u.referralCode,
-      createdAt: u.createdAt,
-      status: u.isActive ? 'active' : 'inactive'
-    }));
+    const referralsMap = new Map();
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const docs = await User.find({ referredBy: userId })
+          .select('firstName lastName email createdAt referralCode isActive')
+          .sort({ createdAt: -1 });
+        docs.forEach(u => {
+          referralsMap.set(String(u._id), {
+            id: u._id,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            email: u.email,
+            referralCode: u.referralCode,
+            createdAt: u.createdAt,
+            status: u.isActive ? 'active' : 'inactive'
+          });
+        });
+      } catch (_) {}
+    }
+
+    localUsers.forEach(u => {
+      if (String(u.referredBy || '') === String(userId) || (userRefCode && u.referralCode === userRefCode && String(u._id || u.id) !== String(userId))) {
+        const key = String(u._id || u.id || u.email);
+        if (!referralsMap.has(key)) {
+          referralsMap.set(key, {
+            id: u._id || u.id,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            email: u.email,
+            referralCode: u.referralCode,
+            createdAt: u.createdAt,
+            status: u.isActive ? 'active' : 'inactive'
+          });
+        }
+      }
+    });
+
+    if (userRefCode) {
+      const localApps = readCollection('applications') || [];
+      localApps.forEach(a => {
+        if (a.referralCode === userRefCode) {
+          const key = 'app_' + String(a.id || a.email);
+          if (!referralsMap.has(key)) {
+            referralsMap.set(key, {
+              id: a.id || key,
+              firstName: a.firstName,
+              lastName: a.lastName,
+              email: a.email,
+              referralCode: a.referralCode,
+              createdAt: a.createdAt,
+              status: a.status || 'pending'
+            });
+          }
+        }
+      });
+    }
+
+    const allReferrals = Array.from(referralsMap.values());
+    const total = allReferrals.length;
+    const paginated = allReferrals.slice(skip, skip + parseInt(limit));
 
     res.json({
       success: true,
       data: {
-        referrals,
+        referrals: paginated,
         pagination: {
           currentPage: parseInt(page),
           totalPages: Math.max(1, Math.ceil(total / parseInt(limit))),
@@ -385,7 +600,39 @@ router.get('/:userId/referrals', ownerOrAdmin('userId'), [
 // @access  Private/Admin
 router.get('/stats', adminAuth, async (req, res) => {
   try {
-    const stats = await User.getUserStats();
+    let stats = null;
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        stats = await User.getUserStats();
+      } catch (dbErr) {
+        console.warn('User.getUserStats db error:', dbErr.message);
+      }
+    }
+
+    if (!stats || (!stats.realUsers && !stats.virtualUsers && !stats.totalUsers)) {
+      const rawUsers = readCollection('users') || [];
+      const localUsers = rawUsers.filter((u) => u.role !== 'admin' && u.email !== 'support@veritasaid.com');
+      const active = localUsers.filter((u) => u.isActive !== false);
+      const real = localUsers.filter((u) => !u.isVirtual);
+      const virtual = localUsers.filter((u) => !!u.isVirtual);
+      const points = localUsers.reduce((sum, u) => sum + (Number(u.points) || 0), 0);
+      const votes = localUsers.reduce((sum, u) => sum + (Number(u.stats?.totalVotes) || Number(u.votingRights) || 0), 0);
+
+      const baseCount = 13780;
+      const calcTotal = baseCount + localUsers.length;
+      const calcActive = Math.floor(calcTotal * 0.85);
+
+      stats = {
+        totalUsers: calcTotal,
+        activeUsers: calcActive,
+        realUsers: real.length || 0,
+        virtualUsers: virtual.length || 0,
+        totalPoints: points || 0,
+        averagePoints: localUsers.length ? Math.round(points / localUsers.length) : 0,
+        totalVotesSubmitted: votes || 0
+      };
+    }
 
     res.json({
       success: true,
@@ -396,19 +643,56 @@ router.get('/stats', adminAuth, async (req, res) => {
 
   } catch (error) {
     console.error('Get user stats error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching user statistics'
+    const rawUsers = readCollection('users') || [];
+    const localUsers = rawUsers.filter((u) => u.role !== 'admin' && u.email !== 'support@veritasaid.com');
+    const real = localUsers.filter((u) => !u.isVirtual);
+    const virtual = localUsers.filter((u) => !!u.isVirtual);
+    const points = localUsers.reduce((sum, u) => sum + (Number(u.points) || 0), 0);
+    const votes = localUsers.reduce((sum, u) => sum + (Number(u.stats?.totalVotes) || Number(u.votingRights) || 0), 0);
+    const baseCount = 13780;
+    const calcTotal = baseCount + localUsers.length;
+    const calcActive = Math.floor(calcTotal * 0.85);
+
+    res.json({
+      success: true,
+      data: {
+        stats: {
+          totalUsers: calcTotal,
+          activeUsers: calcActive,
+          realUsers: real.length || 0,
+          virtualUsers: virtual.length || 0,
+          totalPoints: points || 0,
+          averagePoints: localUsers.length ? Math.round(points / localUsers.length) : 0,
+          totalVotesSubmitted: votes || 0
+        }
+      }
     });
   }
 });
+
 
 // @route   GET /api/users/:id
 // @desc    Get user by ID
 // @access  Private (own profile or admin)
 router.get('/:id', ownerOrAdmin(), async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const { id } = req.params;
+    let user = null;
+
+    if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
+      try {
+        user = await User.findById(id).select('-password');
+      } catch (_) {}
+    }
+
+    if (!user) {
+      const localUsers = readCollection('users') || [];
+      const found = localUsers.find(u => String(u._id || u.id) === String(id) || u.email === id);
+      if (found) {
+        user = { ...found };
+        delete user.password;
+      }
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -417,7 +701,7 @@ router.get('/:id', ownerOrAdmin(), async (req, res) => {
       });
     }
 
-    const obj = user.toObject();
+    const obj = typeof user.toObject === 'function' ? user.toObject() : { ...user };
     const original = String(req.query.original || '').toLowerCase();
     const includeOverrides = !(original === 'true' || original === '1');
     if (includeOverrides && obj.overrides) {
@@ -433,20 +717,24 @@ router.get('/:id', ownerOrAdmin(), async (req, res) => {
       const statsOffsets = obj.overrides.statsOffsets || {};
       const oStats = obj.overrides.stats || {};
 
+      const rawVoting = typeof obj.stats.votingPoints === 'number' ? obj.stats.votingPoints : 0;
+      const rawContrib = typeof obj.stats.contributionPoints === 'number' ? obj.stats.contributionPoints : 0;
+      const rawReferral = typeof obj.stats.referralPoints === 'number' ? obj.stats.referralPoints : 0;
+
       if (typeof statsOffsets.votingPoints === 'number') {
-        obj.stats.votingPoints = Math.max(0, (obj.stats.votingPoints || 0) + statsOffsets.votingPoints);
+        obj.stats.votingPoints = Math.max(0, rawVoting + statsOffsets.votingPoints);
       } else if (typeof oStats.votingPoints === 'number') {
         obj.stats.votingPoints = oStats.votingPoints;
       }
 
       if (typeof statsOffsets.contributionPoints === 'number') {
-        obj.stats.contributionPoints = Math.max(0, (obj.stats.contributionPoints || 0) + statsOffsets.contributionPoints);
+        obj.stats.contributionPoints = Math.max(0, rawContrib + statsOffsets.contributionPoints);
       } else if (typeof oStats.contributionPoints === 'number') {
         obj.stats.contributionPoints = oStats.contributionPoints;
       }
 
       if (typeof statsOffsets.referralPoints === 'number') {
-        obj.stats.referralPoints = Math.max(0, (obj.stats.referralPoints || 0) + statsOffsets.referralPoints);
+        obj.stats.referralPoints = Math.max(0, rawReferral + statsOffsets.referralPoints);
       } else if (typeof oStats.referralPoints === 'number') {
         obj.stats.referralPoints = oStats.referralPoints;
       }
@@ -456,13 +744,6 @@ router.get('/:id', ownerOrAdmin(), async (req, res) => {
         obj.points = Math.max(0, (obj.points || 0) + obj.overrides.pointsOffset);
       } else if (typeof obj.overrides.points === 'number') {
         obj.points = obj.overrides.points;
-      } else if (typeof obj.overrides.points !== 'number' && Object.keys(oStats).length > 0) {
-        // Fallback for legacy complex delta calculation if needed, 
-        // but generally we expect pointsOffset to be set if statsOffsets are set.
-        // If only legacy absolute stats are present, we might need to recalculate total points?
-        // Let's keep it simple: if no pointsOffset and no points override, trust the base points 
-        // unless legacy logic is required. The legacy logic was complex and prone to bugs.
-        // We'll assume the new system handles totals via pointsOffset.
       }
 
       // Legacy other stats
@@ -473,7 +754,47 @@ router.get('/:id', ownerOrAdmin(), async (req, res) => {
 
     // Always include real stats (unaffected by manipulation) for admin review
     try {
-      obj.realStats = await user.calculateRealStats();
+      if (typeof user.calculateRealStats === 'function') {
+        obj.realStats = await user.calculateRealStats();
+      } else {
+        const uidStr = String(obj._id || obj.id || '');
+        const refCode = obj.referralCode;
+        const countedEmails = new Set();
+
+        const allLocalUsers = readCollection('users') || [];
+        allLocalUsers.forEach(lu => {
+          if (lu.email && (String(lu.referredBy || '') === uidStr || (refCode && lu.referralCode === refCode && String(lu._id || lu.id) !== uidStr))) {
+            countedEmails.add(lu.email.toLowerCase());
+          }
+        });
+
+        if (refCode) {
+          const allLocalApps = readCollection('applications') || [];
+          allLocalApps.forEach(la => {
+            if (la.email && la.referralCode === refCode) {
+              countedEmails.add(la.email.toLowerCase());
+            }
+          });
+        }
+
+        const refCount = countedEmails.size;
+        const refPts = refCount * 10;
+        obj.realStats = {
+          votingPoints: obj.stats?.votingPoints || 0,
+          contributionPoints: obj.stats?.contributionPoints || 0,
+          referralPoints: Math.max(obj.stats?.referralPoints || 0, refPts),
+          totalPoints: (obj.stats?.votingPoints || 0) + (obj.stats?.contributionPoints || 0) + Math.max(obj.stats?.referralPoints || 0, refPts),
+          referralCount: refCount
+        };
+      }
+
+      if (obj.realStats) {
+        obj.stats = obj.stats || {};
+        obj.stats.votingPoints = Math.max(obj.stats.votingPoints || 0, obj.realStats.votingPoints);
+        obj.stats.contributionPoints = Math.max(obj.stats.contributionPoints || 0, obj.realStats.contributionPoints);
+        obj.stats.referralPoints = Math.max(obj.stats.referralPoints || 0, obj.realStats.referralPoints);
+        obj.points = Math.max(obj.points || 0, obj.realStats.totalPoints);
+      }
     } catch (e) {
       console.error('Failed to calculate real stats:', e);
     }
@@ -559,46 +880,63 @@ router.put('/:id', ownerOrAdmin(), [
     const { id } = req.params;
     const updates = req.body;
 
-    // Check if user exists
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
+    let user = null;
+    if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
+      try {
+        user = await User.findById(id);
+      } catch (_) {}
     }
 
-    if (updates.email && updates.email !== user.email) {
-      const existingUser = await User.findOne({ email: updates.email });
-      if (existingUser) {
-        return res.status(400).json({
-          success: false,
-          message: 'Email is already taken'
-        });
+    if (user) {
+      if (updates.email && updates.email !== user.email) {
+        const existingUser = await User.findOne({ email: updates.email });
+        if (existingUser && String(existingUser._id) !== String(id)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Email is already taken'
+          });
+        }
       }
-    }
-    if (updates.username && updates.username !== user.username) {
-      const existingUserByUsername = await User.findOne({ username: updates.username });
-      if (existingUserByUsername) {
-        return res.status(400).json({
-          success: false,
-          message: 'Username is already taken'
-        });
+      if (updates.username && updates.username !== user.username) {
+        const existingUserByUsername = await User.findOne({ username: updates.username });
+        if (existingUserByUsername && String(existingUserByUsername._id) !== String(id)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Username is already taken'
+          });
+        }
       }
+
+      Object.assign(user, updates);
+      await user.save();
     }
 
-    // Update user
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      { $set: updates },
-      { new: true, runValidators: true }
-    ).select('-password');
+    // Always update localStore fallback as well
+    const localUsers = readCollection('users') || [];
+    const idx = localUsers.findIndex(u => String(u._id || u.id) === String(id) || (user && u.email === user.email));
+    let updatedLocalUser = null;
+    if (idx !== -1) {
+      localUsers[idx] = { ...localUsers[idx], ...updates, updatedAt: new Date().toISOString() };
+      updatedLocalUser = localUsers[idx];
+      writeCollection('users', localUsers);
+    } else if (!user) {
+      updatedLocalUser = {
+        _id: id,
+        id: id,
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
+      localUsers.unshift(updatedLocalUser);
+      writeCollection('users', localUsers);
+    }
+
+    const resultUser = user ? (typeof user.toObject === 'function' ? user.toObject() : user) : updatedLocalUser;
 
     res.json({
       success: true,
       message: 'User updated successfully',
       data: {
-        user: updatedUser
+        user: resultUser
       }
     });
 
@@ -626,64 +964,97 @@ router.put('/:id/dashboard-bulk', adminAuth, [
     const { id } = req.params;
     const { points, losses, rank, reason } = req.body;
 
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+    let user = null;
+
+    if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
+      try {
+        user = await User.findById(id);
+      } catch (dbErr) {
+        console.warn('User.findById db error:', dbErr.message);
+      }
     }
 
-    // 1. Handle Losses
-    if (losses) {
-      if (losses.verified !== undefined) user.verifiedLoss = Number(losses.verified);
-      if (losses.unverified !== undefined) user.unverifiedLoss = Number(losses.unverified);
-      if (losses.restituted !== undefined) user.amountRestituted = Number(losses.restituted);
-    }
+    if (user) {
+      // 1. Handle Losses
+      if (losses) {
+        if (losses.verified !== undefined && losses.verified !== null) user.verifiedLoss = Number(losses.verified);
+        if (losses.unverified !== undefined && losses.unverified !== null) user.unverifiedLoss = Number(losses.unverified);
+        if (losses.restituted !== undefined && losses.restituted !== null) user.amountRestituted = Number(losses.restituted);
+      }
 
-    // 2. Handle Rank
-    if (rank !== undefined) {
-      user.overrides = user.overrides || {};
-      user.overrides.rankOverride = (rank === null || rank === '') ? undefined : Number(rank);
-      user.markModified('overrides');
-    }
+      // 2. Handle Rank
+      if (rank !== undefined) {
+        user.overrides = user.overrides || {};
+        user.overrides.rankOverride = (rank === null || rank === '') ? undefined : Number(rank);
+        user.markModified('overrides');
+      }
 
-    // 3. Handle Points (Bulk)
-    if (points) {
-      user.pointsHistory = user.pointsHistory || [];
-      const categories = ['total', 'voting', 'contributions', 'referral'];
+      // 3. Handle Points (Bulk)
+      if (points) {
+        user.pointsHistory = user.pointsHistory || [];
+        const categories = ['total', 'voting', 'contributions', 'referral'];
 
-      categories.forEach(cat => {
-        const data = points[cat];
-        if (data && !isNaN(parseFloat(data.amount)) && parseFloat(data.amount) > 0) {
-          const amt = Math.abs(parseFloat(data.amount));
-          const isAdd = data.type === 'add';
-          const delta = isAdd ? amt : -amt;
+        categories.forEach(cat => {
+          const data = points[cat];
+          if (data && !isNaN(parseFloat(data.amount)) && parseFloat(data.amount) > 0) {
+            const amt = Math.abs(parseFloat(data.amount));
+            const isAdd = data.type === 'add';
+            const delta = isAdd ? amt : -amt;
 
-          if (cat === 'total') {
-            user.points = Math.max(0, (user.points || 0) + delta);
-            user.pointsHistory.push({ category: 'total', amount: amt, type: data.type, reason: reason || 'Bulk update', performedBy: req.user.id });
-          } else {
-            const field = cat === 'voting' ? 'votingPoints' : cat === 'contributions' ? 'contributionPoints' : 'referralPoints';
-            user.stats = user.stats || {};
-            user.stats[field] = Math.max(0, (user.stats[field] || 0) + delta);
+            if (cat === 'total') {
+              user.points = Math.max(0, (user.points || 0) + delta);
+              user.pointsHistory.push({ category: 'total', amount: amt, type: data.type, reason: reason || 'Bulk update', performedBy: req.user?.id || 'admin' });
+            } else {
+              const field = cat === 'voting' ? 'votingPoints' : cat === 'contributions' ? 'contributionPoints' : 'referralPoints';
+              user.stats = user.stats || {};
+              user.stats[field] = Math.max(0, (user.stats[field] || 0) + delta);
 
-            // Mirror change to total points
-            user.points = Math.max(0, (user.points || 0) + delta);
-            user.pointsHistory.push({ category: cat, amount: amt, type: data.type, reason: reason || 'Bulk update', performedBy: req.user.id });
+              // Mirror change to total points
+              user.points = Math.max(0, (user.points || 0) + delta);
+              user.pointsHistory.push({ category: cat, amount: amt, type: data.type, reason: reason || 'Bulk update', performedBy: req.user?.id || 'admin' });
+            }
           }
-        }
-      });
+        });
 
-      user.markModified('stats');
-      user.markModified('pointsHistory');
+        user.markModified('stats');
+        user.markModified('pointsHistory');
+      }
+
+      await user.save();
     }
 
-    await user.save();
+    // Always update localStore fallback as well
+    const localUsers = readCollection('users') || [];
+    const idx = localUsers.findIndex(u => String(u._id || u.id) === String(id) || u.email === (user ? user.email : ''));
+    if (idx !== -1) {
+      if (losses) {
+        if (losses.verified !== undefined && losses.verified !== null) localUsers[idx].verifiedLoss = Number(losses.verified);
+        if (losses.unverified !== undefined && losses.unverified !== null) localUsers[idx].unverifiedLoss = Number(losses.unverified);
+        if (losses.restituted !== undefined && losses.restituted !== null) localUsers[idx].amountRestituted = Number(losses.restituted);
+      }
+      if (rank !== undefined) {
+        localUsers[idx].rank = (rank === null || rank === '') ? undefined : Number(rank);
+      }
+      writeCollection('users', localUsers);
+    } else if (!user) {
+      const updatedUserObj = {
+        _id: id,
+        verifiedLoss: losses?.verified !== undefined ? Number(losses.verified) : 0,
+        unverifiedLoss: losses?.unverified !== undefined ? Number(losses.unverified) : 0,
+        amountRestituted: losses?.restituted !== undefined ? Number(losses.restituted) : 0,
+        rank: rank !== undefined ? Number(rank) : undefined,
+        updatedAt: new Date().toISOString()
+      };
+      localUsers.unshift(updatedUserObj);
+      writeCollection('users', localUsers);
+    }
 
-    res.json({ success: true, message: 'Dashboard data updated successfully', data: { user } });
+    res.json({ success: true, message: 'Dashboard data updated successfully', data: { user: user || { id } } });
     try { global.__broadcastUsersUpdate({ type: 'user_updated', id }); } catch (_) { }
     try { global.__broadcastUsersUpdate({ type: 'user_points_updated', id }); } catch (_) { }
   } catch (error) {
     console.error('Bulk dashboard update error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: error.message || 'Server error' });
   }
 });
 
@@ -700,28 +1071,56 @@ router.put('/:id/dashboard-data', adminAuth, [
     const { id } = req.params;
     const { verifiedLoss, unverifiedLoss, amountRestituted, rank } = req.body;
 
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+    let user = null;
+
+    if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
+      try {
+        user = await User.findById(id);
+      } catch (dbErr) {
+        console.warn('User.findById db error:', dbErr.message);
+      }
     }
 
-    if (verifiedLoss !== undefined) user.verifiedLoss = verifiedLoss;
-    if (unverifiedLoss !== undefined) user.unverifiedLoss = unverifiedLoss;
-    if (amountRestituted !== undefined) user.amountRestituted = amountRestituted;
+    if (user) {
+      if (verifiedLoss !== undefined && verifiedLoss !== null) user.verifiedLoss = Number(verifiedLoss);
+      if (unverifiedLoss !== undefined && unverifiedLoss !== null) user.unverifiedLoss = Number(unverifiedLoss);
+      if (amountRestituted !== undefined && amountRestituted !== null) user.amountRestituted = Number(amountRestituted);
 
-    if (rank !== undefined) {
-      user.overrides = user.overrides || {};
-      user.overrides.rankOverride = (rank === null || rank === '') ? undefined : Number(rank);
-      user.markModified('overrides');
+      if (rank !== undefined) {
+        user.overrides = user.overrides || {};
+        user.overrides.rankOverride = (rank === null || rank === '') ? undefined : Number(rank);
+        user.markModified('overrides');
+      }
+
+      await user.save();
     }
 
-    await user.save();
+    const localUsers = readCollection('users') || [];
+    const idx = localUsers.findIndex(u => String(u._id || u.id) === String(id) || u.email === (user ? user.email : ''));
+    if (idx !== -1) {
+      if (verifiedLoss !== undefined && verifiedLoss !== null) localUsers[idx].verifiedLoss = Number(verifiedLoss);
+      if (unverifiedLoss !== undefined && unverifiedLoss !== null) localUsers[idx].unverifiedLoss = Number(unverifiedLoss);
+      if (amountRestituted !== undefined && amountRestituted !== null) localUsers[idx].amountRestituted = Number(amountRestituted);
+      if (rank !== undefined) localUsers[idx].rank = (rank === null || rank === '') ? undefined : Number(rank);
+      writeCollection('users', localUsers);
+    } else if (!user) {
+      const updatedUserObj = {
+        _id: id,
+        verifiedLoss: verifiedLoss !== undefined ? Number(verifiedLoss) : 0,
+        unverifiedLoss: unverifiedLoss !== undefined ? Number(unverifiedLoss) : 0,
+        amountRestituted: amountRestituted !== undefined ? Number(amountRestituted) : 0,
+        rank: rank !== undefined ? Number(rank) : undefined,
+        updatedAt: new Date().toISOString()
+      };
+      localUsers.unshift(updatedUserObj);
+      writeCollection('users', localUsers);
+    }
 
-    res.json({ success: true, message: 'Dashboard data updated', data: { user } });
+    res.json({ success: true, message: 'Dashboard data updated', data: { user: user || { id } } });
     try { global.__broadcastUsersUpdate({ type: 'user_updated', id }); } catch (_) { }
   } catch (error) {
     console.error('Update dashboard data error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: error.message || 'Server error' });
   }
 });
 
@@ -730,17 +1129,17 @@ router.put('/:id/dashboard-data', adminAuth, [
 // @access  Private/Admin
 router.put('/:id/points', adminAuth, [
   body('amount')
-    .isNumeric()
-    .withMessage('Amount must be a number'),
+    .isFloat({ min: 0.01 })
+    .withMessage('Amount must be a positive number'),
 
   body('type')
     .isIn(['add', 'deduct'])
-    .withMessage('Type must be add or deduct'),
+    .withMessage('Type must be either add or deduct'),
 
   body('category')
     .optional()
-    .isIn(['voting', 'contributions', 'referral', 'bonus', 'penalty'])
-    .withMessage('Category must be voting, contributions, referral, bonus, or penalty'),
+    .isIn(['voting', 'contributions', 'referral', 'bonus', 'other'])
+    .withMessage('Invalid category'),
 
   body('reason')
     .optional()
@@ -749,7 +1148,6 @@ router.put('/:id/points', adminAuth, [
     .withMessage('Reason cannot exceed 200 characters')
 ], async (req, res) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -761,65 +1159,78 @@ router.put('/:id/points', adminAuth, [
 
     const { id } = req.params;
     const { amount, type, category = 'bonus', reason } = req.body;
+    const pointsAmount = Math.abs(parseFloat(amount));
+    const delta = type === 'add' ? pointsAmount : -pointsAmount;
 
-    // Check if user exists
-    const user = await User.findById(id);
-    if (!user) {
+    let user = null;
+    if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
+      try {
+        user = await User.findById(id);
+      } catch (_) {}
+    }
+
+    if (user) {
+      if (['voting', 'contributions', 'referral'].includes(category)) {
+        const field = category === 'voting' ? 'votingPoints'
+          : category === 'contributions' ? 'contributionPoints'
+            : 'referralPoints';
+
+        user.stats = user.stats || {};
+        user.stats[field] = Math.max(0, (user.stats[field] || 0) + delta);
+        user.points = Math.max(0, (user.points || 0) + delta);
+      } else {
+        user.points = Math.max(0, (user.points || 0) + delta);
+      }
+
+      user.pointsHistory = user.pointsHistory || [];
+      user.pointsHistory.push({
+        category: ['voting', 'contributions', 'referral'].includes(category) ? category : 'total',
+        amount: pointsAmount,
+        type,
+        reason: reason || 'Individual point adjustment',
+        performedBy: req.user.id
+      });
+
+      user.markModified('stats');
+      user.markModified('pointsHistory');
+      await user.save();
+    }
+
+    // Always update localStore fallback as well
+    const localUsers = readCollection('users') || [];
+    const idx = localUsers.findIndex(u => String(u._id || u.id) === String(id) || (user && u.email === user.email));
+    let updatedLocalUser = null;
+    if (idx !== -1) {
+      const uLoc = localUsers[idx];
+      uLoc.stats = uLoc.stats || {};
+      if (['voting', 'contributions', 'referral'].includes(category)) {
+        const field = category === 'voting' ? 'votingPoints'
+          : category === 'contributions' ? 'contributionPoints'
+            : 'referralPoints';
+        uLoc.stats[field] = Math.max(0, (uLoc.stats[field] || 0) + delta);
+      }
+      uLoc.points = Math.max(0, (uLoc.points || 0) + delta);
+      uLoc.updatedAt = new Date().toISOString();
+      updatedLocalUser = uLoc;
+      writeCollection('users', localUsers);
+    }
+
+    if (!user && !updatedLocalUser) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const pointsAmount = Math.abs(parseFloat(amount));
-    user.overrides = user.overrides || {};
-    user.overrides.statsOffsets = user.overrides.statsOffsets || {};
-
-    // Clear old absolute overrides to avoid confusion
-    if (user.overrides.points !== undefined) user.overrides.points = undefined;
-    if (user.overrides.stats) {
-      if (user.overrides.stats.votingPoints !== undefined) user.overrides.stats.votingPoints = undefined;
-      if (user.overrides.stats.contributionPoints !== undefined) user.overrides.stats.contributionPoints = undefined;
-      if (user.overrides.stats.referralPoints !== undefined) user.overrides.stats.referralPoints = undefined;
-    }
-
-    const delta = type === 'add' ? pointsAmount : -pointsAmount;
-
-    if (['voting', 'contributions', 'referral'].includes(category)) {
-      const field = category === 'voting' ? 'votingPoints'
-        : category === 'contributions' ? 'contributionPoints'
-          : 'referralPoints';
-
-      user.stats = user.stats || {};
-      user.stats[field] = Math.max(0, (user.stats[field] || 0) + delta);
-      user.points = Math.max(0, (user.points || 0) + delta);
-    } else {
-      user.points = Math.max(0, (user.points || 0) + delta);
-    }
-
-    user.pointsHistory = user.pointsHistory || [];
-    user.pointsHistory.push({
-      category: ['voting', 'contributions', 'referral'].includes(category) ? category : 'total',
-      amount: pointsAmount,
-      type,
-      reason: reason || 'Individual point adjustment',
-      performedBy: req.user.id
-    });
-
-    user.markModified('stats');
-    user.markModified('pointsHistory');
-    await user.save();
-
-    // Get updated user
-    const updatedUser = await User.findById(id).select('-password');
+    const updatedUserObj = user ? (typeof user.toObject === 'function' ? user.toObject() : user) : updatedLocalUser;
 
     res.json({
       success: true,
       message: `Points ${type === 'add' ? 'added' : 'deducted'} successfully`,
       data: {
-        user: updatedUser,
+        user: updatedUserObj,
         transaction: {
-          amount: type === 'add' ? pointsAmount : -pointsAmount,
+          amount: delta,
           category,
           reason,
           performedBy: req.user.id,
@@ -829,7 +1240,6 @@ router.put('/:id/points', adminAuth, [
     });
 
     try { global.__broadcastUsersUpdate({ type: 'user_points_updated', id }); } catch (_) { }
-    try { global.__broadcastUsersUpdate({ type: 'user_overrides_updated', id }); } catch (_) { }
 
   } catch (error) {
     console.error('Update points error:', error);
@@ -1000,16 +1410,23 @@ router.delete('/:id', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Check if user exists
-    const user = await User.findById(id);
-    if (!user) {
+    let user = null;
+    if (mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
+      try {
+        user = await User.findById(id);
+      } catch (_) {}
+    }
+
+    const localUsers = readCollection('users') || [];
+    const localIdx = localUsers.findIndex(u => String(u._id || u.id) === String(id) || (user && u.email === user.email));
+
+    if (!user && localIdx === -1) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    // Prevent admin from deleting themselves
     if (id === req.user.id) {
       return res.status(400).json({
         success: false,
@@ -1017,17 +1434,28 @@ router.delete('/:id', adminAuth, async (req, res) => {
       });
     }
 
-    // Delete user
-    await User.findByIdAndDelete(id);
+    if (user) {
+      await User.findByIdAndDelete(user._id);
+    }
+
+    let deletedEmail = user ? user.email : '';
+    let deletedName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '';
+
+    if (localIdx !== -1) {
+      if (!deletedEmail) deletedEmail = localUsers[localIdx].email;
+      if (!deletedName) deletedName = localUsers[localIdx].fullName || localUsers[localIdx].firstName || 'User';
+      localUsers.splice(localIdx, 1);
+      writeCollection('users', localUsers);
+    }
 
     res.json({
       success: true,
       message: 'User deleted successfully',
       data: {
         deletedUser: {
-          id: user._id,
-          email: user.email,
-          name: `${user.firstName} ${user.lastName}`
+          id: id,
+          email: deletedEmail,
+          name: deletedName
         },
         deletedBy: req.user.id,
         deletedAt: new Date()
@@ -1068,3 +1496,4 @@ router.get('/stream', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.getUnifiedRankedUsers = getUnifiedRankedUsers;

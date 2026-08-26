@@ -21,19 +21,35 @@ router.post('/', [
 
         const { firstName, lastName, email, details, referralCode } = req.body;
 
-        const application = new JoinApplication({
-            firstName,
-            lastName,
-            email,
-            details,
-            referralCode
-        });
+        if (mongoose.connection.readyState === 1) {
+            try {
+                const application = new JoinApplication({
+                    firstName,
+                    lastName,
+                    email,
+                    details,
+                    referralCode
+                });
+                await application.save();
+            } catch (dbErr) {
+                console.warn('JoinApplication DB save error:', dbErr.message);
+            }
+        }
 
-        await application.save();
-
-        // Send confirmation email disabled per user request
-        // const { sendJoinConfirmationEmail } = require('../services/emailService');
-        // sendJoinConfirmationEmail({ email, firstName }).catch(err => console.error('Join email failed:', err));
+        try {
+            const apps = readCollection('applications') || [];
+            apps.unshift({
+                id: 'app_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                firstName,
+                lastName,
+                email,
+                details,
+                referralCode,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            });
+            writeCollection('applications', apps);
+        } catch (_) {}
 
         res.status(201).json({ success: true, message: 'Application submitted successfully' });
     } catch (error) {
@@ -42,31 +58,78 @@ router.post('/', [
     }
 });
 
+const mongoose = require('mongoose');
+const { readCollection, writeCollection } = require('../utils/localStore');
+
 // GET /api/join
 // Admin route to get all join applications
 router.get('/', adminAuth, async (req, res) => {
     try {
-        const applications = await JoinApplication.find().sort({ createdAt: -1 });
+        let applications = [];
+        if (mongoose.connection.readyState === 1) {
+            try {
+                applications = await JoinApplication.find().sort({ createdAt: -1 });
+            } catch (dbErr) {
+                console.warn('JoinApplication find error:', dbErr.message);
+            }
+        }
 
-        // Collect all emails from applications
-        const emails = applications.map(a => a.email).filter(Boolean);
+        if (!applications || applications.length === 0) {
+            applications = readCollection('applications');
+        }
 
-        // Find which emails have registered accounts and ARE VERIFIED in the User collection
-        const registeredUsers = await User.find(
-            { email: { $in: emails }, isEmailVerified: true },
-            { email: 1 }
-        ).lean();
-        const registeredEmailSet = new Set(registeredUsers.map(u => u.email));
+        let registeredEmailSet = new Set();
+        if (mongoose.connection.readyState === 1) {
+            try {
+                const emails = applications.map(a => a.email).filter(Boolean);
+                const registeredUsers = await User.find(
+                    { email: { $in: emails.map(e => new RegExp('^' + String(e).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i')) } },
+                    { email: 1 }
+                ).lean();
+                registeredUsers.forEach(u => {
+                    if (u.email) registeredEmailSet.add(u.email.toLowerCase());
+                });
+            } catch (_) {}
+        }
+        const localUsersList = readCollection('users') || [];
+        localUsersList.forEach(u => {
+            if (u.email) registeredEmailSet.add(String(u.email).toLowerCase());
+        });
 
-        // Attach hasAccount flag and referrerName to each application
         const enriched = await Promise.all(applications.map(async (app) => {
-            const appObj = app.toObject();
-            appObj.hasAccount = registeredEmailSet.has(app.email);
+            const appObj = typeof app.toObject === 'function' ? app.toObject() : { ...app };
+            appObj.id = appObj._id || appObj.id;
+            const appEmailNorm = String(app.email || '').trim().toLowerCase();
+            const isRegistered = registeredEmailSet.has(appEmailNorm);
+            appObj.hasAccount = isRegistered;
+            if (isRegistered) {
+                appObj.status = 'registered';
+            }
 
             if (app.referralCode) {
-                const referrer = await User.findOne({ referralCode: app.referralCode }, { firstName: 1, lastName: 1 });
+                let referrer = null;
+                if (mongoose.connection.readyState === 1) {
+                    try {
+                        referrer = await User.findOne({
+                            $or: [{ referralCode: app.referralCode }, { username: app.referralCode }]
+                        }, { firstName: 1, lastName: 1, email: 1 });
+                    } catch (_) {}
+                }
+                if (!referrer) {
+                    referrer = localUsersList.find(u =>
+                        u.referralCode === app.referralCode || u.username === app.referralCode
+                    );
+                }
+                if (!referrer) {
+                    const allLocalApps = readCollection('applications') || [];
+                    const refApp = allLocalApps.find(a => a.referralCode === app.referralCode && a.email !== app.email);
+                    if (refApp) {
+                        referrer = localUsersList.find(u => u.email === refApp.email) || refApp;
+                    }
+                }
+
                 if (referrer) {
-                    appObj.referrerName = `${referrer.firstName} ${referrer.lastName || ''}`.trim();
+                    appObj.referrerName = `${referrer.firstName || ''} ${referrer.lastName || ''}`.trim() || referrer.fullName || referrer.email;
                 }
             }
             return appObj;
@@ -75,8 +138,10 @@ router.get('/', adminAuth, async (req, res) => {
         res.json({ success: true, applications: enriched });
     } catch (error) {
         console.error('Get applications error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        const applications = readCollection('applications');
+        res.json({ success: true, applications });
     }
 });
 
 module.exports = router;
+

@@ -1,0 +1,29 @@
+[
+  {
+    "_id": "usr_1787555856064_161",
+    "id": "usr_1787555856064_161",
+    "firstName": "VirtualTest",
+    "lastName": "User",
+    "email": "virtual_1787555856061_123@victim.dao",
+    "isVirtual": true,
+    "points": 50,
+    "votingRights": 1,
+    "role": "user",
+    "isActive": true,
+    "createdAt": "2026-08-24T07:17:36.064Z"
+  },
+  {
+    "_id": "usr_1787520987976_808",
+    "firstName": "arham",
+    "lastName": "arham",
+    "email": "aishasana252@gmail.com",
+    "password": "$2a$10$BM89MrFcW9k55bO8RDDUce.8jSETxrmU/e7gYVl.XANh4KjfyqvaG",
+    "role": "user",
+    "isActive": true,
+    "referralCode": "87228fd9fc08",
+    "isEmailVerified": false,
+    "emailVerificationToken": "faa7da5f2ccf02340872dcb479fabd4e0b9e5d91a43804d90718021f115c7b19",
+    "emailVerificationExpires": 1787607387976,
+    "createdAt": "2026-08-23T21:36:27.976Z"
+  }
+]

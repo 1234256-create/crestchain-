@@ -4,7 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -16,6 +16,8 @@ const passwordRoutes = require('./routes/password');
 const settingsRoutes = require('./routes/settings');
 const contentRoutes = require('./routes/content');
 const joinRoutes = require('./routes/join');
+const articleRoutes = require('./routes/articles');
+const scamCompaniesRoutes = require('./routes/scamCompanies');
 
 const app = express();
 const http = require('http');
@@ -80,7 +82,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Static serving for uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Static serving for top-level images (branding assets)
+app.use('/images', express.static(path.join(__dirname, '../client/public/images')));
 app.use('/images', express.static(path.join(__dirname, '../images')));
+app.use(express.static(path.join(__dirname, '../client/public')));
+
 // Allow embedding documents in iframe by removing X-Frame-Options header for this route
 app.use('/documents', (req, res, next) => {
   res.removeHeader('X-Frame-Options');
@@ -88,50 +93,49 @@ app.use('/documents', (req, res, next) => {
 });
 app.use('/documents', express.static(path.join(__dirname, '../documents')));
 
+// Disable buffering so Mongoose queries fail fast and trigger localStore fallbacks when MongoDB is offline
+mongoose.set('bufferCommands', false);
+
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/doa-voting', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 2000,
+  connectTimeoutMS: 2000
 })
   .then(() => {
     console.log('Connected to MongoDB');
-    const seedAdmin = async () => {
+    const seedAdminAndUser = async () => {
       try {
-        const email = process.env.ADMIN_EMAIL;
-        const password = process.env.ADMIN_PASSWORD;
-        if (!email || !password) return;
-        const bcrypt = require('bcryptjs');
-        let admin = await User.findOne({ email }).select('+password');
-        if (!admin) {
-          admin = new User({ firstName: 'Admin', lastName: 'User', email, password, role: 'admin', isActive: true });
-          await admin.save();
-        } else {
-          let changed = false;
-          if (admin.role !== 'admin') {
-            admin.role = 'admin';
-            changed = true;
-          }
-          if (!admin.isActive) {
-            admin.isActive = true;
-            changed = true;
-          }
-          const matchesEnv = await bcrypt.compare(password, admin.password);
-          if (!matchesEnv) {
-            admin.password = password;
-            changed = true;
-          }
-          if (changed) {
+        const email = process.env.ADMIN_EMAIL || 'support@veritasaid.com';
+        const password = process.env.ADMIN_PASSWORD || 'AdminPassword123!';
+        if (email && password) {
+          const bcrypt = require('bcryptjs');
+          let admin = await User.findOne({ email }).select('+password');
+          if (!admin) {
+            admin = new User({ firstName: 'Admin', lastName: 'User', email, password, role: 'admin', isActive: true });
             await admin.save();
+            console.log('[DB Seed] Admin account created:', email);
+          } else {
+            let changed = false;
+            if (admin.role !== 'admin') { admin.role = 'admin'; changed = true; }
+            if (!admin.isActive) { admin.isActive = true; changed = true; }
+            const matchesEnv = await bcrypt.compare(password, admin.password);
+            if (!matchesEnv) { admin.password = password; changed = true; }
+            if (changed) { await admin.save(); }
           }
         }
-      } catch { }
+      } catch (err) {
+        console.warn('[DB Seed Notice]', err.message);
+      }
     };
-    seedAdmin();
+    seedAdminAndUser();
   })
   .catch((error) => {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
+    console.warn('MongoDB connection notice: Running without MongoDB or waiting for MongoDB service.');
   });
+
+
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -144,6 +148,8 @@ app.use('/api/password', passwordRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/join', joinRoutes);
+app.use('/api/articles', articleRoutes);
+app.use('/api/scam-companies', scamCompaniesRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({

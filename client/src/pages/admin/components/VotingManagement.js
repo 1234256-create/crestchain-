@@ -150,11 +150,12 @@ const VotingManagement = () => {
           votes: Number(o.votes) || 0
         }))
       };
-      const res = await axios.put(`/api/votes/${editingVote.id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.put(`/api/votes/${editingVote._id || editingVote.id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
       if (res.data?.success) {
         toast.success('Vote updated');
         setShowEditModal(false);
         await loadVotes();
+        window.dispatchEvent(new Event('datastore:update'));
       }
     } catch (e) {
       const msg = e.response?.data?.message || e.message || 'Failed to update vote';
@@ -170,6 +171,7 @@ const VotingManagement = () => {
       if (res.data?.success) {
         toast.success('Vote started');
         await loadVotes();
+        window.dispatchEvent(new Event('datastore:update'));
       }
     } catch (e) {
       const msg = e.response?.data?.message || e.message || 'Failed to start vote';
@@ -185,6 +187,7 @@ const VotingManagement = () => {
       if (res.data?.success) {
         toast.success('Vote paused');
         await loadVotes();
+        window.dispatchEvent(new Event('datastore:update'));
       }
     } catch (e) {
       const msg = e.response?.data?.message || e.message || 'Failed to pause vote';
@@ -200,7 +203,9 @@ const VotingManagement = () => {
       const res = await axios.delete(`/api/votes/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.data?.success) {
         toast.success('Vote deleted');
+        setVotes(prev => prev.filter(v => String(v.id || v._id) !== String(id)));
         await loadVotes();
+        window.dispatchEvent(new Event('datastore:update'));
       }
     } catch (e) {
       const msg = e.response?.data?.message || e.message || 'Failed to delete vote';
@@ -670,8 +675,6 @@ const VotingManagement = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`px-2 py-1 text-xs rounded-full ${v.status === 'active' ? 'bg-green-100 text-green-700' : v.status === 'paused' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>{v.status}</span>
-                    <button onClick={() => startVote(v.id)} disabled={v.status === 'active'} className={`px-3 py-1.5 rounded text-white ${v.status === 'active' ? 'bg-green-400 cursor-not-allowed opacity-60' : 'bg-green-600'}`}>Start</button>
-                    <button onClick={() => stopVote(v.id)} disabled={v.status !== 'active'} className={`px-3 py-1.5 rounded text-white ${v.status !== 'active' ? 'bg-yellow-400 cursor-not-allowed opacity-60' : 'bg-yellow-600'}`}>Stop</button>
                     <button onClick={() => openVotersModal(v)} className="px-3 py-1.5 bg-purple-600 text-white rounded flex items-center gap-1">
                       <Users className="w-4 h-4" />
                       Voters

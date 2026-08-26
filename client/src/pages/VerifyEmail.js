@@ -39,7 +39,7 @@ const VerifyEmail = () => {
 
                     setStatus('success');
                     setMessage(response.data.message || 'Email verified successfully!');
-                    toast.success('Email verified! Welcome to VictimDAO.');
+                    toast.success('Email verified! Welcome to Veritas.');
 
                     // Redirect to dashboard after a short delay
                     setTimeout(() => {
@@ -66,12 +66,8 @@ const VerifyEmail = () => {
         <div className="min-h-screen hero-gradient flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-black/20"></div>
 
-            {/* Background Elements */}
-            <div className="absolute top-20 left-10 w-20 h-20 bg-purple-500/20 rounded-full animate-float"></div>
-            <div className="absolute top-40 right-20 w-16 h-16 bg-blue-500/20 rounded-full animate-float" style={{ animationDelay: '2s' }}></div>
-            <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-yellow-500/20 rounded-full animate-float" style={{ animationDelay: '4s' }}></div>
-
             <motion.div
+
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="relative max-w-lg w-full bg-white/10 backdrop-blur-lg border border-white/20 p-12 rounded-2xl shadow-2xl text-center"

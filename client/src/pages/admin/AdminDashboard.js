@@ -20,7 +20,14 @@ import {
   Eye,
   EyeOff,
   Settings,
-
+  FileText,
+  CreditCard,
+  Building,
+  CheckCircle,
+  Briefcase,
+  ShieldAlert,
+  Link2,
+  Mail,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -38,6 +45,10 @@ import VirtualUsers from './components/VirtualUsers';
 import UserVotingRights from './components/UserVotingRights';
 import TopChampionsManagement from './components/TopChampionsManagement';
 import AdminSettingsPanel from './components/AdminSettingsPanel';
+import ArticlesManagement from './components/ArticlesManagement';
+import ScamCompaniesManagement from './components/ScamCompaniesManagement';
+import PRManagement from './components/PRManagement';
+import ContactMessagesManagement from './components/ContactMessagesManagement';
 import SystemSettings from './SystemSettings';
 
 const AdminDashboard = () => {
@@ -227,29 +238,61 @@ const AdminDashboard = () => {
         return;
       }
       const headers = { Authorization: `Bearer ${token}` };
-      const [usersRes, votesRes, contribRes] = await Promise.all([
-        axios.get('/api/users/stats', { headers }),
-        axios.get('/api/votes', { params: { limit: 200 }, headers }),
-        axios.get('/api/contributions', { params: { status: 'pending' }, headers })
+      const [usersRes, votesRes, contribRes, listRes] = await Promise.all([
+        axios.get('/api/users/stats', { headers }).catch(() => ({ data: {} })),
+        axios.get('/api/votes', { params: { limit: 200 }, headers }).catch(() => ({ data: {} })),
+        axios.get('/api/contributions', { params: { status: 'pending' }, headers }).catch(() => ({ data: {} })),
+        axios.get('/api/users', { params: { limit: 1000 }, headers }).catch(() => ({ data: {} }))
       ]);
+
       const s = usersRes.data?.data?.stats || {};
       const votes = votesRes.data?.data?.votes || [];
       const active = votes.filter(v => String(v.status) === 'active').length;
       const totalSubmitted = votes.reduce((acc, v) => acc + (Number(v.totalVotes) || 0), 0);
       const pending = (contribRes.data?.data?.contributions || []).length;
+      const userList = listRes.data?.data?.users || [];
+
+      let realCount = s.realUsers || 0;
+      let virtualCount = s.virtualUsers || 0;
+      let totalCount = s.totalUsers || 0;
+      let pointsCount = s.totalPoints || 0;
+
+      if (userList.length > 0) {
+        const realFromList = userList.filter(u => !u.isVirtual).length;
+        const virtualFromList = userList.filter(u => !!u.isVirtual).length;
+        const pointsFromList = userList.reduce((sum, u) => sum + (Number(u.points) || 0), 0);
+
+        if (!realCount) realCount = realFromList;
+        if (!virtualCount) virtualCount = virtualFromList;
+        if (!totalCount) totalCount = userList.length;
+        if (!pointsCount) pointsCount = pointsFromList;
+      }
+
+      const dsStats = getDashboardStats();
+      if (!realCount && dsStats.realUsers) realCount = dsStats.realUsers;
+      if (!virtualCount && dsStats.virtualUsers) virtualCount = dsStats.virtualUsers;
+      if (!pointsCount && dsStats.totalPoints) pointsCount = dsStats.totalPoints;
+
       setDashboardStats({
-        totalUsers: s.totalUsers || 0,
-        realUsers: s.realUsers || 0,
-        virtualUsers: s.virtualUsers || 0,
-        activeVotes: active || 0,
-        totalPoints: s.totalPoints || 0,
+        totalUsers: totalCount || 0,
+        realUsers: realCount || 0,
+        virtualUsers: virtualCount || 0,
+        activeVotes: active || dsStats.activeVotes || 0,
+        totalPoints: pointsCount || 0,
         totalVotesSubmitted: (s.totalVotesSubmitted || 0) || (totalSubmitted || 0),
         pendingContributions: pending || 0
       });
     } catch (error) {
-      setDashboardStats({ totalUsers: 0, realUsers: 0, virtualUsers: 0, activeVotes: 0, totalPoints: 0, totalVotesSubmitted: 0, pendingContributions: 0 });
-      const msg = error?.response?.data?.message || 'Failed to load dashboard stats';
-      toast.error(msg);
+      const dsStats = getDashboardStats();
+      setDashboardStats({
+        totalUsers: dsStats.totalUsers || 0,
+        realUsers: dsStats.realUsers || 0,
+        virtualUsers: dsStats.virtualUsers || 0,
+        activeVotes: dsStats.activeVotes || 0,
+        totalPoints: dsStats.totalPoints || 0,
+        totalVotesSubmitted: dsStats.totalVotesSubmitted || 0,
+        pendingContributions: 0
+      });
     }
   };
 
@@ -293,22 +336,10 @@ const AdminDashboard = () => {
       permission: 'voting_management'
     },
     {
-      id: 'wallet',
-      label: 'Wallet & QR Codes',
-      icon: Wallet,
-      permission: 'wallet_management'
-    },
-    {
       id: 'voting',
       label: 'Voting Management',
       icon: Vote,
       permission: 'voting_management'
-    },
-    {
-      id: 'contribution-timer',
-      label: 'Contribution Timer',
-      icon: Clock,
-      permission: 'contribution_management'
     },
     {
       id: 'join-applications',
@@ -329,10 +360,22 @@ const AdminDashboard = () => {
       permission: 'points_management'
     },
     {
-      id: 'contributions',
-      label: 'Contribution Receipts',
-      icon: Receipt,
-      permission: 'contribution_management'
+      id: 'articles',
+      label: 'Articles',
+      icon: FileText,
+      permission: null
+    },
+    {
+      id: 'scam-companies',
+      label: 'Scam Alerts',
+      icon: ShieldAlert,
+      permission: null
+    },
+    {
+      id: 'pr-management',
+      label: 'Site & PR Settings',
+      icon: Link2,
+      permission: null
     },
     {
       id: 'settings',
@@ -347,7 +390,7 @@ const AdminDashboard = () => {
   );
 
   useEffect(() => {
-    const allowed = new Set(['dashboard', 'users', 'virtual-users', 'wallet', 'voting', 'user-voting-rights', 'contribution-timer', 'join-applications', 'points', 'contributions', 'top-champions', 'settings']);
+    const allowed = new Set(['dashboard', 'users', 'virtual-users', 'wallet', 'voting', 'user-voting-rights', 'contribution-timer', 'join-applications', 'points', 'contributions', 'top-champions', 'articles', 'scam-companies', 'pr-management', 'contact-messages', 'settings']);
     if (section && section !== activeSection) {
       setActiveSection(allowed.has(section) ? section : 'dashboard');
     }
@@ -356,11 +399,12 @@ const AdminDashboard = () => {
   const renderDashboardOverview = () => (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-6 text-white">
+      <div className="bg-gradient-to-r from-[#085464] to-[#059669] rounded-2xl p-6 text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold mb-2">Welcome back, {admin?.username}!</h1>
-            <p className="text-purple-100">Here's what's happening with your DOA platform today.</p>
+            <p className="text-emerald-100">Here's what's happening with your Veritas platform today.</p>
+
           </div>
         </div>
       </div>
@@ -377,8 +421,8 @@ const AdminDashboard = () => {
               <p className="text-gray-600 text-sm font-medium">Real Users</p>
               <p className="text-2xl font-bold text-gray-900">{dashboardStats.realUsers.toLocaleString()}</p>
             </div>
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <Users className="w-6 h-6 text-blue-600" />
+            <div className="bg-emerald-500/10 p-3 rounded-lg">
+              <Users className="w-6 h-6 text-[#059669]" />
             </div>
           </div>
         </motion.div>
@@ -393,8 +437,8 @@ const AdminDashboard = () => {
               <p className="text-gray-600 text-sm font-medium">Virtual Users</p>
               <p className="text-2xl font-bold text-gray-900">{dashboardStats.virtualUsers.toLocaleString()}</p>
             </div>
-            <div className="bg-purple-100 p-3 rounded-lg">
-              <Users className="w-6 h-6 text-purple-600" />
+            <div className="bg-emerald-500/10 p-3 rounded-lg">
+              <Users className="w-6 h-6 text-[#059669]" />
             </div>
           </div>
         </motion.div>
@@ -423,8 +467,8 @@ const AdminDashboard = () => {
               <p className="text-gray-600 text-sm font-medium">Total Votes Submitted</p>
               <p className="text-2xl font-bold text-gray-900">{(dashboardStats.totalVotesSubmitted || 0).toLocaleString()}</p>
             </div>
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <Activity className="w-6 h-6 text-blue-600" />
+            <div className="bg-emerald-500/10 p-3 rounded-lg">
+              <Activity className="w-6 h-6 text-[#059669]" />
             </div>
           </div>
         </motion.div>
@@ -453,8 +497,8 @@ const AdminDashboard = () => {
               <p className="text-gray-600 text-sm font-medium">Pending Contributions</p>
               <p className="text-2xl font-bold text-gray-900">{dashboardStats.pendingContributions}</p>
             </div>
-            <div className="bg-purple-100 p-3 rounded-lg">
-              <Receipt className="w-6 h-6 text-purple-600" />
+            <div className="bg-emerald-500/10 p-3 rounded-lg">
+              <Receipt className="w-6 h-6 text-[#059669]" />
             </div>
           </div>
         </motion.div>
@@ -471,7 +515,7 @@ const AdminDashboard = () => {
             {notifications.length > 0 && notifications.map((n) => (
               <div key={n.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <Activity className="w-4 h-4 text-gray-600" />
+                  <Activity className="w-4 h-4 text-[#059669]" />
                   <div>
                     <p className="text-sm font-medium text-gray-800">{n.message}</p>
                     <p className="text-xs text-gray-600">{n.userEmail || 'system'} • {n.type}</p>
@@ -482,21 +526,19 @@ const AdminDashboard = () => {
             ))}
           </div>
         </div>
-
-
-
-
       </div>
     </div>
   );
 
+  const getPageTitle = () => {
+    const active = menuItems.find(item => item.id === activeSection);
+    return active ? active.label : 'Dashboard Overview';
+  };
 
   const renderContent = () => {
     switch (activeSection) {
       case 'dashboard':
         return renderDashboardOverview();
-      case 'wallet':
-        return <WalletManagement />;
       case 'users':
         return <UserProfileManagement />;
       case 'virtual-users':
@@ -505,16 +547,18 @@ const AdminDashboard = () => {
         return <VotingManagement />;
       case 'user-voting-rights':
         return <UserVotingRights />;
-      case 'contribution-timer':
-        return <ContributionTimer />;
       case 'points':
         return <PointsRanking />;
-      case 'contributions':
-        return <ContributionReceipts />;
       case 'join-applications':
         return <JoinApplications />;
       case 'top-champions':
         return <TopChampionsManagement />;
+      case 'articles':
+        return <ArticlesManagement />;
+      case 'scam-companies':
+        return <ScamCompaniesManagement />;
+      case 'pr-management':
+        return <PRManagement />;
       case 'settings':
         return <AdminSettingsPanel />;
       default:
@@ -523,7 +567,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-gray-50 flex admin-scope">
       {/* Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -538,18 +582,17 @@ const AdminDashboard = () => {
               {/* Sidebar Header */}
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-white" />
-                  </div>
+                  <img src="/images/logo.png" alt="Veritas Logo" className="h-10 w-auto object-contain" />
                   <div>
-                    <h2 className="text-lg font-bold text-gray-900">DOA Admin</h2>
+                    <h2 className="text-lg font-bold text-gray-900">Veritas Admin</h2>
                     <p className="text-xs text-gray-500">Control Panel</p>
                   </div>
+
                 </div>
               </div>
 
               {/* Navigation Menu */}
-              <nav className="flex-1 p-4 space-y-2">
+              <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                 {filteredMenuItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeSection === item.id;
@@ -561,7 +604,7 @@ const AdminDashboard = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${isActive
-                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-600/20'
                         : 'text-gray-700 hover:bg-gray-100'
                         }`}
                     >
@@ -575,8 +618,8 @@ const AdminDashboard = () => {
               {/* Admin Info & Logout */}
               <div className="p-4 border-t border-gray-200">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-purple-600 font-medium text-sm">
+                  <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <span className="text-emerald-700 font-bold text-sm">
                       {admin?.username?.charAt(0).toUpperCase()}
                     </span>
                   </div>
@@ -601,7 +644,7 @@ const AdminDashboard = () => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen min-w-0 max-w-full overflow-x-hidden">
         {/* Top Header */}
         <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -624,11 +667,9 @@ const AdminDashboard = () => {
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00A4E4] focus:border-transparent text-sm"
                 />
               </div>
-
-
             </div>
           </div>
         </header>
