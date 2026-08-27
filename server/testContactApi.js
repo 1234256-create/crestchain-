@@ -4,7 +4,7 @@ const data = JSON.stringify({
   name: 'Test Client',
   email: 'support@veritasaid.com',
   subject: 'Inquiry about refund claim',
-  message: 'Hello Veritas support team, this is a live test message sent from contact form.'
+  message: 'Hello AVERADAO support team, this is a live test message sent from contact form.'
 });
 
 const req = http.request({

@@ -7,14 +7,14 @@ const PrivacyPolicy = () => {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex items-center gap-3 mb-6">
           <Lock className="w-6 h-6 text-gray-900" />
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">Veritas - Privacy Policy</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">AVERADAO - Privacy Policy</h1>
         </div>
         <p className="text-sm text-gray-500 mb-8">Last Updated: November 2025</p>
         <div className="space-y-6 text-gray-800">
-          <p>This Privacy Policy explains how Veritas ("we," "our," or "the platform") collects, uses, and protects information when you use our website and decentralized services.</p>
-          <p>Veritas is designed to protect victims, ensure transparency, and maintain community trust.</p>
+          <p>This Privacy Policy explains how AVERADAO ("we," "our," or "the platform") collects, uses, and protects information when you use our website and decentralized services.</p>
+          <p>AVERADAO is designed to protect victims, ensure transparency, and maintain community trust.</p>
           <h2 className="text-xl font-bold text-gray-900">1. What We Collect</h2>
-          <p>Veritas is built to minimize personal data collection. We collect only what is necessary to verify claims and operate the protocol.</p>
+          <p>AVERADAO is built to minimize personal data collection. We collect only what is necessary to verify claims and operate the protocol.</p>
           <h3 className="text-lg font-semibold text-gray-900">1.1 Information You Provide</h3>
           <p>When submitting a claim or contacting us, you may voluntarily provide:</p>
           <ul className="list-disc pl-6 space-y-1">
@@ -66,20 +66,20 @@ const PrivacyPolicy = () => {
           <p>We retain off-chain submissions only as long as necessary for verification, auditability, security, and compliance.</p>
           <p>You may request deletion of off-chain data, except on-chain data (immutable) and data required for legal or fraud-prevention reasons.</p>
           <h2 className="text-xl font-bold text-gray-900">7. Cookies and Analytics</h2>
-          <p>Veritas may use minimal, privacy-friendly analytics to understand traffic and improve the website. We do not use invasive tracking or serve targeted ads.</p>
+          <p>AVERADAO may use minimal, privacy-friendly analytics to understand traffic and improve the website. We do not use invasive tracking or serve targeted ads.</p>
           <h2 className="text-xl font-bold text-gray-900">8. Children's Privacy</h2>
-          <p>Veritas is not intended for individuals under 18. We do not knowingly collect data from minors.</p>
+          <p>AVERADAO is not intended for individuals under 18. We do not knowingly collect data from minors.</p>
           <h2 className="text-xl font-bold text-gray-900">9. Your Rights</h2>
           <p>Depending on your jurisdiction, you may have rights to access, correct, delete, restrict, or export your data.</p>
           <p>Requests can be made at: support@veritasaid.com</p>
           <h2 className="text-xl font-bold text-gray-900">10. International Users</h2>
-          <p>Veritas operates globally. By using our Services, you consent to the transfer and processing of your information across jurisdictions.</p>
+          <p>AVERADAO operates globally. By using our Services, you consent to the transfer and processing of your information across jurisdictions.</p>
           <h2 className="text-xl font-bold text-gray-900">11. Changes to This Policy</h2>
           <p>We may update this Privacy Policy periodically. Continued use of the Services means you accept the revised version.</p>
           <h2 className="text-xl font-bold text-gray-900">12. Contact</h2>
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-gray-900"><Mail className="w-5 h-5" /><span>support@veritasaid.com</span></div>
-            <div className="flex items-center gap-2 text-gray-900"><Send className="w-5 h-5" /><span>veritasaid.com</span></div>
+            <div className="flex items-center gap-2 text-gray-900"><Send className="w-5 h-5" /><span>___AVERADAO_DOMAIN___</span></div>
           </div>
         </div>
       </div>

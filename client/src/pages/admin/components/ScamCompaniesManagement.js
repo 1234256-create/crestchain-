@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -137,7 +137,7 @@ const ScamCompaniesManagement = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
-            <ShieldAlert className="w-7 h-7 text-[#059669]" />
+            <ShieldAlert className="w-7 h-7 text-[#2563eb]" />
             Scam Alert Companies
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">
@@ -161,7 +161,7 @@ const ScamCompaniesManagement = () => {
             onClick={openCreate}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#085464] to-[#059669] text-white rounded-xl font-bold text-sm shadow-md shadow-emerald-900/20 hover:brightness-110 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#0f172a] to-[#2563eb] text-white rounded-xl font-bold text-sm shadow-md shadow-blue-900/20 hover:brightness-110 transition-all"
           >
             <Plus className="w-4 h-4" />
             + Add Company
@@ -201,7 +201,7 @@ const ScamCompaniesManagement = () => {
       {customCompanies.length > 0 && (
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#059669] uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#2563eb] uppercase tracking-wider flex items-center gap-2">
               <Building2 className="w-4 h-4" />
               Admin Custom Added Alerts ({customCompanies.length})
             </h3>
@@ -211,7 +211,7 @@ const ScamCompaniesManagement = () => {
             {customCompanies.map((comp) => (
               <div
                 key={comp.id}
-                className="p-4 bg-gray-50 rounded-xl border border-gray-200 flex flex-col justify-between hover:border-[#059669] transition-all"
+                className="p-4 bg-gray-50 rounded-xl border border-gray-200 flex flex-col justify-between hover:border-[#2563eb] transition-all"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
@@ -229,7 +229,7 @@ const ScamCompaniesManagement = () => {
                 <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-gray-200">
                   <button
                     onClick={() => openEdit(comp)}
-                    className="p-1.5 text-slate-600 hover:text-[#059669] hover:bg-slate-200 rounded-lg transition-all text-xs font-semibold flex items-center gap-1"
+                    className="p-1.5 text-slate-600 hover:text-[#2563eb] hover:bg-slate-200 rounded-lg transition-all text-xs font-semibold flex items-center gap-1"
                   >
                     <Edit className="w-3.5 h-3.5" />
                     Edit
@@ -284,7 +284,7 @@ const ScamCompaniesManagement = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-gray-100"
             >
-              <div className="bg-gradient-to-r from-[#085464] to-[#059669] p-5 text-white flex items-center justify-between">
+              <div className="bg-gradient-to-r from-[#0f172a] to-[#2563eb] p-5 text-white flex items-center justify-between">
                 <h3 className="font-bold text-lg flex items-center gap-2">
                   <ShieldAlert className="w-5 h-5" />
                   {editingId ? 'Edit Scam Company' : 'Add Scam Company / Alert'}
@@ -366,7 +366,7 @@ const ScamCompaniesManagement = () => {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-[#085464] to-[#059669] text-white font-bold text-sm rounded-xl shadow-md hover:brightness-110 transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-[#0f172a] to-[#2563eb] text-white font-bold text-sm rounded-xl shadow-md hover:brightness-110 transition-all disabled:opacity-50"
                   >
                     <Save className="w-4 h-4" />
                     {saving ? 'Saving...' : 'Save Company'}

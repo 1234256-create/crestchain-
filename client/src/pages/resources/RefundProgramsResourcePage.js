@@ -48,16 +48,16 @@ const RefundProgramsResourcePage = () => {
 
   return (
     <ResourcePageLayout
-      title="VERITAS REFUND PROGRAMS"
+      title="AVERADAO REFUND PROGRAMS"
       iconSrc="/images/resources/Refund_program_icon.png"
       iconAlt="Refund programs"
     >
       <div className="mx-auto max-w-4xl min-w-0 space-y-8">
         <div className="space-y-4 text-lg leading-relaxed text-gray-600">
           <p>
-            Veritas is a decentralized asset recovery protocol that helps government agencies securely distribute
+            AVERADAO is a decentralized asset recovery protocol that helps government agencies securely distribute
             cryptocurrency recovered from illegal business practices and return funds to those who lost money.
-            Below are active refund programs for which Veritas has helped securely distribute recovered funds.
+            Below are active refund programs for which AVERADAO has helped securely distribute recovered funds.
           </p>
         </div>
 
@@ -65,11 +65,11 @@ const RefundProgramsResourcePage = () => {
           className="rounded-xl border-l-4 border-amber-500 bg-amber-50 px-5 py-4 text-base leading-relaxed text-amber-950 shadow-sm"
           role="note"
         >
-          <p className="font-semibold text-amber-950">VERITAS REFUND PROGRAMS</p>
+          <p className="font-semibold text-amber-950">AVERADAO REFUND PROGRAMS</p>
           <p className="mt-2">
-            <strong>Veritas will never request payment</strong> to help you pursue a claim, make threats, or instruct
+            <strong>AVERADAO will never request payment</strong> to help you pursue a claim, make threats, or instruct
             you to transfer money. If you have been targeted by an illegal business practice or scam,{' '}
-            <strong>report it to Veritas</strong> through our official channels only.
+            <strong>report it to AVERADAO</strong> through our official channels only.
           </p>
         </aside>
 

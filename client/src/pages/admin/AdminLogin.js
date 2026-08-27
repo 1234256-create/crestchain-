@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
@@ -92,7 +92,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a] flex items-center justify-center p-4 admin-scope">
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0a1628] flex items-center justify-center p-4 admin-scope">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -107,10 +107,10 @@ const AdminLogin = () => {
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             className="inline-flex items-center justify-center mb-3"
           >
-            <img src="/images/logo.png" alt="Veritas Logo" className="h-16 sm:h-20 w-auto object-contain drop-shadow-lg" />
+            <img src="/images/logo.png" alt="AVERADAO Logo" className="h-16 sm:h-20 w-auto object-contain drop-shadow-lg" />
           </motion.div>
           <h1 className="text-3xl font-bold text-white mb-2">Admin Panel</h1>
-          <p className="text-gray-300">Veritas Administrative Access</p>
+          <p className="text-gray-300">AVERADAO Administrative Access</p>
         </div>
 
         {/* Login Form */}
@@ -151,7 +151,7 @@ const AdminLogin = () => {
                   onChange={handleInputChange}
                   placeholder="Enter admin username"
                   disabled={isBlocked || isLoading}
-                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-all disabled:opacity-50"
+                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all disabled:opacity-50"
                   required
                 />
               </div>
@@ -168,7 +168,7 @@ const AdminLogin = () => {
                   onChange={handleInputChange}
                   placeholder="Enter admin password"
                   disabled={isBlocked || isLoading}
-                  className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-all disabled:opacity-50"
+                  className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all disabled:opacity-50"
                   required
                 />
                 <button
@@ -186,7 +186,7 @@ const AdminLogin = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               disabled={isBlocked || isLoading}
-              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg shadow-lg shadow-emerald-950/50 transition-all disabled:opacity-50 cursor-pointer"
+              className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg shadow-lg shadow-blue-950/50 transition-all disabled:opacity-50 cursor-pointer"
             >
               {isLoading ? 'Authenticating...' : 'Sign In to Admin Panel'}
             </motion.button>
@@ -194,10 +194,10 @@ const AdminLogin = () => {
 
           <div className="mt-6 pt-6 border-t border-white/10">
             <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-emerald-400 shrink-0" />
+              <Clock className="w-5 h-5 text-blue-400 shrink-0" />
               <div>
-                <p className="text-emerald-300 font-medium text-sm">Security Notice</p>
-                <p className="text-emerald-400/90 text-xs mt-1">
+                <p className="text-blue-300 font-medium text-sm">Security Notice</p>
+                <p className="text-blue-400/90 text-xs mt-1">
                   This is a secure administrative area. All access attempts are logged and monitored.
                 </p>
               </div>
@@ -213,7 +213,7 @@ const AdminLogin = () => {
           className="text-center mt-8"
         >
           <p className="text-gray-400 text-sm">
-            Veritas Admin Panel v2.0 • Secure Access Portal
+            AVERADAO Admin Panel v2.0 • Secure Access Portal
           </p>
         </motion.div>
       </motion.div>

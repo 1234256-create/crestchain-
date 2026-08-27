@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+﻿import React, { useState, useEffect, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -453,17 +453,17 @@ const Voting = () => {
                           <button
                             onClick={() => !disabled && onSelectOption(vote, opt)}
                             disabled={disabled}
-                            className={`w-full p-4 rounded-lg border-2 transition-all duration-300 flex items-center justify-between relative overflow-hidden ${isSelected ? 'border-cyan-400/80 bg-cyan-950/40 shadow-md shadow-cyan-950/50' : 'border-white/10 hover:border-cyan-400/60'
+                            className={`w-full p-4 rounded-lg border-2 transition-all duration-300 flex items-center justify-between relative overflow-hidden ${isSelected ? 'border-blue-400/80 bg-blue-950/40 shadow-md shadow-blue-950/50' : 'border-white/10 hover:border-blue-400/60'
                               } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             {/* Background fill: goal-based */}
                             <div
-                              className="absolute left-0 top-0 bottom-0 bg-cyan-500/15 transition-all duration-1000"
+                              className="absolute left-0 top-0 bottom-0 bg-blue-500/15 transition-all duration-1000"
                               style={{ width: `${smoothWidth}%` }}
                             />
 
                             <div className="flex items-center gap-3 relative z-10">
-                              <div className={`w-5 h-5 rounded-full border-2 ${isSelected ? 'border-cyan-400 bg-cyan-500' : 'border-gray-400 bg-transparent'
+                              <div className={`w-5 h-5 rounded-full border-2 ${isSelected ? 'border-blue-400 bg-blue-500' : 'border-gray-400 bg-transparent'
                                 }`}></div>
                               <span className="font-semibold text-white">{opt.text}</span>
                             </div>
@@ -471,7 +471,7 @@ const Voting = () => {
                               <span className="text-sm font-bold text-white block">
                                 {displayedVotes}
                               </span>
-                              <span className="text-[10px] text-cyan-200/70">
+                              <span className="text-[10px] text-sky-200/70">
                                 Total votes
                               </span>
                             </div>
@@ -483,7 +483,7 @@ const Voting = () => {
                               initial={{ width: 0 }}
                               animate={{ width: `${smoothWidth}%` }}
                               transition={{ duration: 0.8, ease: 'easeOut' }}
-                              className="h-full bg-gradient-to-r from-[#086a7e] to-[#0ea5e9]"
+                              className="h-full bg-gradient-to-r from-[#1e40af] to-[#0ea5e9]"
                             />
                           </div>
                         </div>
@@ -491,7 +491,7 @@ const Voting = () => {
                     })}
                   </div>
                   <div className="mt-4 text-xs text-gray-300">
-                    Your remaining in this round: <span className="text-cyan-300 font-bold">{getVoteRights(vote).remaining}</span> of <span className="text-cyan-300 font-bold">{getVoteRights(vote).total}</span>
+                    Your remaining in this round: <span className="text-sky-300 font-bold">{getVoteRights(vote).remaining}</span> of <span className="text-sky-300 font-bold">{getVoteRights(vote).total}</span>
                   </div>
                   <div className="mt-4 flex items-center justify-end gap-3">
                     <button
@@ -499,7 +499,7 @@ const Voting = () => {
                       disabled={selectedOptions[vote.id] == null || vote.status !== 'active' || (
                         getVoteRights(vote).remaining <= 0
                       )}
-                      className="px-5 py-2.5 bg-gradient-to-r from-[#086a7e] to-[#0e7490] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-[#097d95] hover:to-[#0891b2] shadow-md shadow-cyan-950/50 transition-all duration-200 font-semibold"
+                      className="px-5 py-2.5 bg-gradient-to-r from-[#1e40af] to-[#1d4ed8] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:from-[#2563eb] hover:to-[#3b82f6] shadow-md shadow-blue-950/50 transition-all duration-200 font-semibold"
                     >
                       Submit Vote
                     </button>

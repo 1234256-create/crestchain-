@@ -62,13 +62,13 @@ const sendEmail = async (options, attempt = 1) => {
   const transporter = createFreshTransporter();
   const fromAddr = process.env.EMAIL_FROM || process.env.EMAIL_USERNAME || 'support@veritasaid.com';
   const mailOptions = {
-    from: `"Veritas Support" <${fromAddr}>`,
+    from: `"AVERADAO Support" <${fromAddr}>`,
     to: options.email,
     subject: options.subject,
     text: options.message,
     html: options.html || undefined,
     replyTo: options.replyTo || fromAddr,
-    headers: { 'X-Mailer': 'Veritas-Mailer' },
+    headers: { 'X-Mailer': 'AVERADAO-Mailer' },
   };
 
   try {
@@ -92,7 +92,7 @@ const sendEmail = async (options, attempt = 1) => {
 const sendPasswordResetEmail = async ({ email, firstName, token }) => {
   const envUrl = process.env.CLIENT_URL;
   const clientUrl = (process.env.NODE_ENV === 'production') 
-    ? (envUrl && !envUrl.includes('localhost') ? envUrl : 'https://veritasaid.com')
+    ? (envUrl && !envUrl.includes('localhost') ? envUrl : 'https://___AVERADAO_DOMAIN___')
     : (envUrl || 'http://localhost:3001');
   const resetURL = `${clientUrl.replace(/\/+$/, '')}/reset-password/${token}`;
   const name = firstName || 'there';
@@ -110,7 +110,7 @@ const sendPasswordResetEmail = async ({ email, firstName, token }) => {
   `;
 
   try {
-    await sendEmail({ email, subject: 'Your password reset link - Veritas', message, html });
+    await sendEmail({ email, subject: 'Your password reset link - AVERADAO', message, html });
   } catch (error) {
     console.error('Error sending password reset email:', error);
     throw new Error('There was an error sending the email. Please try again later.');
@@ -123,27 +123,27 @@ const sendWelcomeEmail = async () => {
 };
 
 const sendJoinConfirmationEmail = async ({ email, firstName }) => {
-  const subject = 'Application Received – Veritas';
+  const subject = 'Application Received – AVERADAO';
   const message = `Hi ${firstName},
   
-Thank you for submitting your join application to Veritas. 
+Thank you for submitting your join application to AVERADAO. 
 Our team is currently reviewing your details. Once verified, you will receive an invitation email with a link to complete your registration.
 
 If you have any questions in the meantime, please reach out to us at support@veritasaid.com.
 
 Best regards,
-The Veritas Team`;
+The AVERADAO Team`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
       <h3 style="color: #085464;">Application Received</h3>
       <p>Hi ${firstName},</p>
-      <p>Thank you for submitting your join application to <strong>Veritas</strong>.</p>
+      <p>Thank you for submitting your join application to <strong>AVERADAO</strong>.</p>
       <p>Our team is currently reviewing your details. Once verified, you will receive an invitation email with a link to complete your registration.</p>
       <p>If you have any questions in the meantime, feel free to contact us at <a href="mailto:support@veritasaid.com" style="color: #085464; font-weight: bold;">support@veritasaid.com</a>.</p>
       <br />
       <hr style="border: none; border-top: 1px solid #eee;" />
-      <p style="font-size: 14px; color: #777;">Best regards,<br />The Veritas Team</p>
+      <p style="font-size: 14px; color: #777;">Best regards,<br />The AVERADAO Team</p>
     </div>
   `;
 
@@ -157,28 +157,28 @@ The Veritas Team`;
 const sendVoteAnnouncementEmail = async ({ email, firstName, voteTitle, voteId }) => {
   const envUrl = process.env.CLIENT_URL;
   const clientUrl = (process.env.NODE_ENV === 'production') 
-    ? (envUrl && !envUrl.includes('localhost') ? envUrl : 'https://veritasaid.com')
+    ? (envUrl && !envUrl.includes('localhost') ? envUrl : 'https://___AVERADAO_DOMAIN___')
     : (envUrl || 'http://localhost:3001');
   const voteLink = `${clientUrl.replace(/\/+$/, '')}/voting?voteId=${voteId}`;
   const name = firstName || 'Member';
-  const subject = `New Vote: ${voteTitle} – Veritas`;
+  const subject = `New Vote: ${voteTitle} – AVERADAO`;
   const message = `Hi ${name},
 
-A new vote proposal "${voteTitle}" has been opened for community voting on Veritas.
+A new vote proposal "${voteTitle}" has been opened for community voting on AVERADAO.
 
 Please click the link below to cast your vote:
 ${voteLink}
 
-Thank you for participating in the Veritas governance process.
+Thank you for participating in the AVERADAO governance process.
 
 Best regards,
-The Veritas Team`;
+The AVERADAO Team`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1f2937; line-height: 1.6; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
       <h2 style="color: #085464; margin-top: 0;">New Governance Vote Announcement</h2>
       <p>Hi <strong>${name}</strong>,</p>
-      <p>A new vote proposal has been created and is now active on <strong>Veritas</strong>:</p>
+      <p>A new vote proposal has been created and is now active on <strong>AVERADAO</strong>:</p>
       <div style="background-color: #f3f4f6; padding: 15px; border-left: 4px solid #085464; margin: 20px 0; border-radius: 4px;">
         <h3 style="margin: 0; color: #111827;">${voteTitle}</h3>
       </div>
@@ -192,7 +192,7 @@ The Veritas Team`;
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0 20px;" />
       <p style="font-size: 14px; color: #4b5563; margin: 0;">
         Sincerely,<br />
-        <strong>The Veritas Team</strong>
+        <strong>The AVERADAO Team</strong>
       </p>
     </div>
   `;
@@ -209,7 +209,7 @@ The Veritas Team`;
 
 const sendOTPEmail = async ({ email, firstName, code, type = 'Password Reset' }) => {
   const name = firstName || 'there';
-  const subject = `${type} OTP – Veritas`;
+  const subject = `${type} OTP – AVERADAO`;
   const message = `Hi ${name}, Your OTP is: ${code}`;
 
   const html = `
@@ -222,7 +222,7 @@ const sendOTPEmail = async ({ email, firstName, code, type = 'Password Reset' })
       <p>This code will expire in 10 minutes.</p>
       <p style="font-size: 14px; color: #666;">If you did not request this, please ignore this email.</p>
       <hr style="border: none; border-top: 1px solid #eee;" />
-      <p style="font-size: 14px; color: #777;">Best regards,<br />The Veritas Team</p>
+      <p style="font-size: 14px; color: #777;">Best regards,<br />The AVERADAO Team</p>
     </div>
   `;
 
@@ -237,17 +237,17 @@ const sendOTPEmail = async ({ email, firstName, code, type = 'Password Reset' })
 const sendVerificationEmail = async ({ email, firstName, token }) => {
   const envUrl = process.env.CLIENT_URL;
   const clientUrl = (process.env.NODE_ENV === 'production') 
-    ? (envUrl && !envUrl.includes('localhost') ? envUrl : 'https://veritasaid.com')
+    ? (envUrl && !envUrl.includes('localhost') ? envUrl : 'https://___AVERADAO_DOMAIN___')
     : (envUrl || 'http://localhost:3001');
   const verifyURL = `${clientUrl.replace(/\/+$/, '')}/verify-email/${token}`;
   const name = firstName || 'there';
   const fromAddr = process.env.EMAIL_FROM || process.env.EMAIL_USERNAME || 'support@veritasaid.com';
 
-  const subject = `Confirm your email for Veritas`;
+  const subject = `Confirm your email for AVERADAO`;
 
   const text = `Hello ${name},
 
-Thank you for signing up for Veritas.
+Thank you for signing up for AVERADAO.
 
 To finish setting up your account, please confirm your email address by opening the link below:
 
@@ -257,10 +257,10 @@ This step helps us verify that this email address belongs to you.
 
 If the link above does not open automatically, copy and paste it into your browser.
 
-If you did not create an account with Veritas, you can safely ignore this message and no further action is required.
+If you did not create an account with AVERADAO, you can safely ignore this message and no further action is required.
 
 Thank you,
-Veritas Team
+AVERADAO Team
 
 —
 This message was sent because a registration request was made using this email address.`;
@@ -268,15 +268,15 @@ This message was sent because a registration request was made using this email a
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
       <p>Hello ${name},</p>
-      <p>Thank you for signing up for Veritas.</p>
+      <p>Thank you for signing up for AVERADAO.</p>
       <p>To finish setting up your account, please confirm your email address by opening the link below:</p>
       <div style="margin: 20px 0;">
         <a href="${verifyURL}" style="color: #085464; text-decoration: underline;">${verifyURL}</a>
       </div>
       <p>This step helps us verify that this email address belongs to you.</p>
       <p>If the link above does not open automatically, copy and paste it into your browser.</p>
-      <p>If you did not create an account with Veritas, you can safely ignore this message and no further action is required.</p>
-      <p>Thank you,<br>Veritas Team</p>
+      <p>If you did not create an account with AVERADAO, you can safely ignore this message and no further action is required.</p>
+      <p>Thank you,<br>AVERADAO Team</p>
       <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; font-size: 12px; color: #777;">
         —<br>
         This message was sent because a registration request was made using this email address.
@@ -286,7 +286,7 @@ This message was sent because a registration request was made using this email a
 
   const transporter = createFreshTransporter();
   const info = await transporter.sendMail({
-    from: `"Veritas" <${fromAddr}>`,
+    from: `"AVERADAO" <${fromAddr}>`,
     to: email,
     subject,
     text,

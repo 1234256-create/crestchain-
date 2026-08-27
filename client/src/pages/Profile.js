@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -158,11 +158,11 @@ const Profile = () => {
   const getRoleColor = (role) => {
     switch (role) {
       case 'admin':
-        return 'from-emerald-600 to-teal-700';
+        return 'from-blue-600 to-blue-700';
       case 'moderator':
-        return 'from-teal-500 to-emerald-600';
+        return 'from-blue-500 to-blue-600';
       default:
-        return 'from-[#085464] to-[#059669]';
+        return 'from-[#0f172a] to-[#2563eb]';
     }
   };
 
@@ -180,7 +180,7 @@ const Profile = () => {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -194,12 +194,12 @@ const Profile = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#041d24]/90 backdrop-blur-md rounded-2xl border border-emerald-500/20 p-6 sm:p-8 mb-8 shadow-xl shadow-emerald-950/30"
+          className="bg-[#041d24]/90 backdrop-blur-md rounded-2xl border border-blue-500/20 p-6 sm:p-8 mb-8 shadow-xl shadow-blue-950/30"
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-6">
             <div className="flex items-center space-x-6">
               <div className="relative">
-                <div className="w-24 h-24 bg-gradient-to-br from-[#085464] via-[#059669] to-[#041d24] rounded-full flex items-center justify-center border-2 border-emerald-500/40 shadow-lg shadow-emerald-950/40">
+                <div className="w-24 h-24 bg-gradient-to-br from-[#0f172a] via-[#2563eb] to-[#041d24] rounded-full flex items-center justify-center border-2 border-blue-500/40 shadow-lg shadow-blue-950/40">
                   <span className="text-white text-3xl font-extrabold tracking-wider">
                     {(user.fullName || user.name || user.firstName || 'U').charAt(0).toUpperCase()}
                   </span>
@@ -212,36 +212,36 @@ const Profile = () => {
               {!isEditing && (
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">{user.fullName || user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim()}</h1>
-                  <div className="space-y-1.5 text-emerald-100/80 text-sm">
+                  <div className="space-y-1.5 text-blue-100/80 text-sm">
                     <div className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4 text-emerald-400" />
+                      <Mail className="w-4 h-4 text-blue-400" />
                       <span>{user.email}</span>
                     </div>
                     {user.address && (
                       <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-emerald-400" />
+                        <MapPin className="w-4 h-4 text-blue-400" />
                         <span>{user.address}</span>
                       </div>
                     )}
                     {user.telegramUsername && (
                       <div className="flex items-center space-x-2">
-                        <Send className="w-4 h-4 text-emerald-400" />
+                        <Send className="w-4 h-4 text-blue-400" />
                         <span>@{user.telegramUsername}</span>
                       </div>
                     )}
                     {user.phoneNumber && (
                       <div className="flex items-center space-x-2">
-                        <Phone className="w-4 h-4 text-emerald-400" />
+                        <Phone className="w-4 h-4 text-blue-400" />
                         <span>{user.phoneNumber}</span>
                       </div>
                     )}
                     {user.walletAddress && (
                       <div className="flex items-center space-x-2">
-                        <Wallet className="w-4 h-4 text-emerald-400" />
+                        <Wallet className="w-4 h-4 text-blue-400" />
                         <span className="text-xs font-mono">{user.walletAddress.slice(0, 20)}...</span>
                       </div>
                     )}
-                    <div className="flex items-center space-x-2 text-xs text-emerald-200/60 pt-1">
+                    <div className="flex items-center space-x-2 text-xs text-blue-200/60 pt-1">
                       <Calendar className="w-3.5 h-3.5" />
                       <span>Joined {new Date(user.createdAt || Date.now()).toLocaleDateString()}</span>
                     </div>
@@ -259,7 +259,7 @@ const Profile = () => {
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl flex items-center space-x-2 transition-all duration-200 font-medium shadow-md shadow-emerald-950/40"
+                className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl flex items-center space-x-2 transition-all duration-200 font-medium shadow-md shadow-blue-950/40"
               >
                 <Edit3 className="w-4 h-4" />
                 <span>Edit Profile</span>
@@ -269,95 +269,95 @@ const Profile = () => {
 
           {/* Edit Form */}
           {isEditing && (
-            <div className="mt-6 pt-6 border-t border-emerald-500/20">
+            <div className="mt-6 pt-6 border-t border-blue-500/20">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-emerald-400" /> Edit Profile Information
+                <Edit3 className="w-5 h-5 text-blue-400" /> Edit Profile Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-emerald-200/90 mb-1">First Name</label>
+                  <label className="block text-sm font-medium text-blue-200/90 mb-1">First Name</label>
                   <input
                     type="text"
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="w-full bg-[#085464]/40 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full bg-[#0f172a]/40 border border-blue-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="First Name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-emerald-200/90 mb-1">Last Name</label>
+                  <label className="block text-sm font-medium text-blue-200/90 mb-1">Last Name</label>
                   <input
                     type="text"
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="w-full bg-[#085464]/40 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full bg-[#0f172a]/40 border border-blue-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Last Name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-emerald-200/90 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-blue-200/90 mb-1">Email</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full bg-[#085464]/40 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full bg-[#0f172a]/40 border border-blue-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Email"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-emerald-200/90 mb-1">Username</label>
+                  <label className="block text-sm font-medium text-blue-200/90 mb-1">Username</label>
                   <input
                     type="text"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    className="w-full bg-[#085464]/40 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full bg-[#0f172a]/40 border border-blue-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Username"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-emerald-200/90 mb-1">Address</label>
+                  <label className="block text-sm font-medium text-blue-200/90 mb-1">Address</label>
                   <input
                     type="text"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full bg-[#085464]/40 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full bg-[#0f172a]/40 border border-blue-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Address"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-emerald-200/90 mb-1">Telegram Username</label>
+                  <label className="block text-sm font-medium text-blue-200/90 mb-1">Telegram Username</label>
                   <input
                     type="text"
                     value={formData.telegramUsername}
                     onChange={(e) => setFormData({ ...formData, telegramUsername: e.target.value })}
-                    className="w-full bg-[#085464]/40 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full bg-[#0f172a]/40 border border-blue-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Telegram Username"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-emerald-200/90 mb-1">Phone Number</label>
+                  <label className="block text-sm font-medium text-blue-200/90 mb-1">Phone Number</label>
                   <input
                     type="tel"
                     value={formData.phoneNumber}
                     onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    className="w-full bg-[#085464]/40 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full bg-[#0f172a]/40 border border-blue-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Phone Number"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-emerald-200/90 mb-1">Wallet Address</label>
+                  <label className="block text-sm font-medium text-blue-200/90 mb-1">Wallet Address</label>
                   <input
                     type="text"
                     value={formData.walletAddress}
                     onChange={(e) => setFormData({ ...formData, walletAddress: e.target.value })}
-                    className="w-full bg-[#085464]/40 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full bg-[#0f172a]/40 border border-blue-500/30 rounded-xl px-4 py-2.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Wallet Address"
                   />
                 </div>
               </div>
 
               {/* Action Buttons Row */}
-              <div className="flex items-center justify-end space-x-3 pt-6 mt-6 border-t border-emerald-500/20">
+              <div className="flex items-center justify-end space-x-3 pt-6 mt-6 border-t border-blue-500/20">
                 <button
                   onClick={handleCancel}
                   className="bg-gray-700 hover:bg-gray-600 text-white px-5 py-2.5 rounded-xl flex items-center space-x-2 transition-all duration-200 font-medium"
@@ -368,7 +368,7 @@ const Profile = () => {
                 <button
                   onClick={handleSave}
                   disabled={loading}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-6 py-2.5 rounded-xl flex items-center space-x-2 transition-all duration-200 font-medium shadow-md shadow-emerald-950/40 disabled:opacity-50"
+                  className="bg-gradient-to-r from-blue-600 to-blue-600 hover:from-blue-500 hover:to-blue-500 text-white px-6 py-2.5 rounded-xl flex items-center space-x-2 transition-all duration-200 font-medium shadow-md shadow-blue-950/40 disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   <span>{loading ? 'Saving...' : 'Save Changes'}</span>

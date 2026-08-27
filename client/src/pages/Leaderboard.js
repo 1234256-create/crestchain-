@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+﻿import React, { useState, useEffect, useContext, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy,
@@ -394,14 +394,14 @@ const Leaderboard = () => {
       case 3:
         return 'from-orange-500 to-orange-600';
       default:
-        return 'from-[#086a7e] to-[#0ea5e9]';
+        return 'from-[#1e40af] to-[#0ea5e9]';
     }
   };
 
   const HardRankCircle = ({ rank, displayRank }) => {
     const val = displayRank || rank;
     return (
-      <div className="w-12 h-10 rounded-xl border border-cyan-400/40 bg-cyan-500/15 flex items-center justify-center text-cyan-300 font-bold text-xs px-2 shadow-md flex-shrink-0 whitespace-nowrap">
+      <div className="w-12 h-10 rounded-xl border border-blue-400/40 bg-blue-500/15 flex items-center justify-center text-sky-300 font-bold text-xs px-2 shadow-md flex-shrink-0 whitespace-nowrap">
         #{val}
       </div>
     );
@@ -426,8 +426,8 @@ const Leaderboard = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, delay: isPersonal ? 0 : Math.min((hardRank || 1) * 0.02, 0.15) }}
       className={`bg-[#031d24]/60 backdrop-blur-lg rounded-2xl p-6 border transition-all duration-300 ${isCurrentUser
-        ? 'border-cyan-400 bg-cyan-500/20 shadow-lg shadow-cyan-950/40'
-        : 'border-white/20 hover:border-cyan-500/30'
+        ? 'border-blue-400 bg-blue-500/20 shadow-lg shadow-blue-950/40'
+        : 'border-white/20 hover:border-blue-500/30'
         } ${position <= 3 ? 'relative overflow-hidden' : ''}`}
     >
 
@@ -469,7 +469,7 @@ const Leaderboard = () => {
               {userData.fullName}
             </h3>
             {isCurrentUser && (
-              <span className="px-2.5 py-0.5 bg-gradient-to-r from-[#086a7e] to-[#0ea5e9] text-white font-bold text-xs rounded-full shadow-sm">You</span>
+              <span className="px-2.5 py-0.5 bg-gradient-to-r from-[#1e40af] to-[#0ea5e9] text-white font-bold text-xs rounded-full shadow-sm">You</span>
             )}
 
             {userData.role === 'admin' && (
@@ -517,20 +517,20 @@ const Leaderboard = () => {
     </motion.div>
   );
 
-  const StatCard = ({ icon: Icon, title, value, subtitle, gradient = "from-[#086a7e] to-[#0ea5e9]" }) => (
+  const StatCard = ({ icon: Icon, title, value, subtitle, gradient = "from-[#1e40af] to-[#0ea5e9]" }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[#031d24]/80 backdrop-blur-lg rounded-2xl p-6 border border-cyan-500/20 shadow-lg shadow-cyan-950/50"
+      className="bg-[#031d24]/80 backdrop-blur-lg rounded-2xl p-6 border border-blue-500/20 shadow-lg shadow-blue-950/50"
     >
       <div className="flex items-center space-x-4">
-        <div className={`p-3 rounded-xl bg-gradient-to-r ${gradient} shadow-md shadow-cyan-950/40`}>
+        <div className={`p-3 rounded-xl bg-gradient-to-r ${gradient} shadow-md shadow-blue-950/40`}>
           <Icon className="w-6 h-6 text-white" />
         </div>
         <div>
           <h3 className="text-2xl font-bold text-white">{value}</h3>
           <p className="text-gray-300 text-sm">{title}</p>
-          {subtitle && <p className="text-cyan-200/60 text-xs">{subtitle}</p>}
+          {subtitle && <p className="text-sky-200/60 text-xs">{subtitle}</p>}
         </div>
       </div>
     </motion.div>
@@ -538,7 +538,7 @@ const Leaderboard = () => {
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a] p-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0a1628] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
@@ -561,7 +561,7 @@ const Leaderboard = () => {
             icon={Users}
             title="Total Users"
             value={stats.totalUsers?.toLocaleString() || '0'}
-            gradient="from-[#086a7e] to-[#0891b2]"
+            gradient="from-[#1e40af] to-[#3b82f6]"
           />
           <StatCard
             icon={TrendingUp}
@@ -577,11 +577,11 @@ const Leaderboard = () => {
         {user && (
           <div className="mb-12">
             <div className="flex items-center gap-2 mb-4">
-              <User className="w-6 h-6 text-cyan-400" />
+              <User className="w-6 h-6 text-blue-400" />
               <h2 className="text-2xl font-bold text-white">Your Ranking</h2>
             </div>
 
-            <div className="bg-gradient-to-r from-[#05323c]/70 to-[#02141a]/80 backdrop-blur-xl rounded-3xl p-1 border border-cyan-500/30 shadow-2xl shadow-cyan-950/60">
+            <div className="bg-gradient-to-r from-[#1e293b]/70 to-[#0a1628]/80 backdrop-blur-xl rounded-3xl p-1 border border-blue-500/30 shadow-2xl shadow-blue-950/60">
               <LeaderboardCard
                 userData={userRank?.user || {
                   ...user,

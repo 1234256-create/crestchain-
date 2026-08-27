@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Crown, 
@@ -94,7 +94,7 @@ const OwnerControlPanel = () => {
     { id: 'security', label: 'Security Center', icon: Shield, color: 'text-yellow-500' },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp, color: 'text-indigo-500' },
     { id: 'appearance', label: 'Site Appearance', icon: Palette, color: 'text-pink-500' },
-    { id: 'communications', label: 'Communications', icon: Mail, color: 'text-cyan-500' },
+    { id: 'communications', label: 'Communications', icon: Mail, color: 'text-blue-500' },
     { id: 'backup', label: 'Backup & Restore', icon: Download, color: 'text-gray-500' }
   ];
 

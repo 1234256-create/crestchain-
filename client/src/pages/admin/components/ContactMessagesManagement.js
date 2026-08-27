@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Mail, Clock, RefreshCw, User, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -33,7 +33,7 @@ const ContactMessagesManagement = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/80 p-6 rounded-2xl border border-slate-800 backdrop-blur-sm">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Mail className="w-5 h-5 text-cyan-400" />
+            <Mail className="w-5 h-5 text-blue-400" />
             Website Contact Messages
           </h2>
           <p className="text-xs text-slate-400 mt-1">
@@ -67,7 +67,7 @@ const ContactMessagesManagement = () => {
             >
               <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-cyan-400" />
+                  <User className="w-4 h-4 text-blue-400" />
                   <span className="text-sm font-bold text-white">{msg.name}</span>
                   <span className="text-xs text-slate-400">({msg.email})</span>
                 </div>
@@ -78,7 +78,7 @@ const ContactMessagesManagement = () => {
               </div>
 
               {msg.subject && (
-                <div className="text-xs font-bold text-cyan-300 uppercase tracking-wider">
+                <div className="text-xs font-bold text-sky-300 uppercase tracking-wider">
                   Subject: {msg.subject}
                 </div>
               )}

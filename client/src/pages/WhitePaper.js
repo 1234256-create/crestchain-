@@ -8,7 +8,7 @@ const WhitePaper = () => {
         {/* Header */}
         <div className="text-center mb-10 pb-6 border-b border-gray-200">
           <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '8px' }}>
-            Veritas Whitepaper
+            AVERADAO Whitepaper
           </h1>
           <p style={{ fontStyle: 'italic', color: '#555', fontSize: '0.95rem' }}>
             "Restoring Trust in Web3, One Victim at a Time"
@@ -60,8 +60,8 @@ const WhitePaper = () => {
 
         {/* Section 1 */}
         <Section title="1. Executive Summary">
-          <p className="mb-3">The Web3 revolution has unlocked financial freedom for millions but it has also exposed users to a rising wave of fraud rug pulls and crypto scams. Veritas is a decentralised initiative designed to verify scam victims issue them on-chain tokens representing their losses and create a transparent community-governed mechanism for funding partial compensation and recovery efforts.</p>
-          <p>Veritas is more than a compensation tool it is a justice protocol that brings hope structure and long-term accountability to the chaos of scam-ridden blockchain ecosystems.</p>
+          <p className="mb-3">The Web3 revolution has unlocked financial freedom for millions but it has also exposed users to a rising wave of fraud rug pulls and crypto scams. AVERADAO is a decentralised initiative designed to verify scam victims issue them on-chain tokens representing their losses and create a transparent community-governed mechanism for funding partial compensation and recovery efforts.</p>
+          <p>AVERADAO is more than a compensation tool it is a justice protocol that brings hope structure and long-term accountability to the chaos of scam-ridden blockchain ecosystems.</p>
         </Section>
 
         {/* Section 2 */}
@@ -75,13 +75,13 @@ const WhitePaper = () => {
         {/* Section 3 */}
         <Section title="3. The Vision">
           <p className="mb-3">"We can't fix every rug pull but we can build a system that helps victims heal recover and protect the next generation" — Rafael Fernando Founder</p>
-          <p>Veritas's goal is to create a permanent decentralized recovery infrastructure supported by a tokenized proof of loss system a community treasury and a platform-led governance structure for distributing funds to verified victims.</p>
+          <p>AVERADAO's goal is to create a permanent decentralized recovery infrastructure supported by a tokenized proof of loss system a community treasury and a platform-led governance structure for distributing funds to verified victims.</p>
         </Section>
 
         {/* Section 4 */}
         <Section title="4. How It Works">
           <SubSection title="4.1 Verification">
-            <p className="mb-2">Victims submit claims via the Veritas portal.</p>
+            <p className="mb-2">Victims submit claims via the AVERADAO portal.</p>
             <p className="mb-2">Each claim includes wallet transactions scam details and timestamps.</p>
             <p className="mb-2">A verification council initially centralized later decentralized reviews and approves claims.</p>
             <p>Approved victims are issued VDAO tokens proportional to their verified loss.</p>
@@ -99,7 +99,7 @@ const WhitePaper = () => {
             <p>Member contributions and bounty-specific donations</p>
           </SubSection>
           <SubSection title="4.4 Reward Distribution">
-            <p className="mb-2">Periodically Veritas holds compensation events.</p>
+            <p className="mb-2">Periodically AVERADAO holds compensation events.</p>
             <p className="mb-2">Voting determines:</p>
             <p className="mb-2">Number of victims to reward</p>
             <p className="mb-2">Reward caps e.g. 50% of loss</p>
@@ -118,7 +118,7 @@ const WhitePaper = () => {
           <div style={{ marginTop: '20px', marginBottom: '16px' }}>
             <p style={{ fontWeight: 'bold', marginBottom: '12px', fontSize: '0.95rem' }}>How It Works Process Flow</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '0.8rem' }}>
-              {['Victim', 'Verification Council', 'Token Issuance', 'Veritas Treasury', 'Reward Distribution'].map((step, i, arr) => (
+              {['Victim', 'Verification Council', 'Token Issuance', 'AVERADAO Treasury', 'Reward Distribution'].map((step, i, arr) => (
                 <React.Fragment key={i}>
                   <div style={{ border: '1px solid #93c5fd', borderRadius: '4px', padding: '6px 10px', color: '#1e40af', whiteSpace: 'nowrap', textAlign: 'center', minWidth: '80px' }}>{step}</div>
                   {i < arr.length - 1 && <span style={{ color: '#9ca3af', fontSize: '1rem' }}>──</span>}
@@ -139,14 +139,14 @@ const WhitePaper = () => {
             </thead>
             <tbody>
               {[
-                ['Token Name', 'Veritas Token'],
+                ['Token Name', 'AVERADAO Token'],
                 ['Ticker', '$VDAO'],
                 ['Type', 'BEP-20'],
                 ['Initial Supply', '0 (Minted per verified claim)'],
                 ['Mint Logic', '1 token = $1 lost (adjustable)'],
                 ['Burn Logic', 'Burned upon reward redemption'],
                 ['Team Allocation', '10% of each mint (vested over 12 24 months)'],
-                ['Max Redemption', 'Veritas-defined caps per cycle (e.g. 50% per victim)'],
+                ['Max Redemption', 'AVERADAO-defined caps per cycle (e.g. 50% per victim)'],
               ].map(([param, desc], i) => (
                 <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#f0f4ff' }}>
                   <td style={{ padding: '7px 12px', border: '1px solid #d1d5db' }}>{param}</td>
@@ -159,7 +159,7 @@ const WhitePaper = () => {
 
         {/* Section 6 */}
         <Section title="6. Governance">
-          <p className="mb-3">Veritas uses a democratic contributor weighted voting model that ensures fairness and rewards meaningful participation.</p>
+          <p className="mb-3">AVERADAO uses a democratic contributor weighted voting model that ensures fairness and rewards meaningful participation.</p>
           <p className="mb-2" style={{ fontWeight: 'bold' }}>Voting Eligibility:</p>
           <p className="mb-3">Only verified victims with active $VDAO tokens are eligible to vote.</p>
           <p className="mb-2" style={{ fontWeight: 'bold' }}>Voting Power:</p>
@@ -234,7 +234,7 @@ const WhitePaper = () => {
 
         {/* Section 9 */}
         <Section title="9. Partnerships &amp; Listings">
-          <p className="mb-3">Veritas is currently in stealth negotiations with:</p>
+          <p className="mb-3">AVERADAO is currently in stealth negotiations with:</p>
           <p className="mb-2">Legal firms specializing in crypto asset recovery</p>
           <p className="mb-2">Forensic analysis platforms</p>
           <p className="mb-2">Grant programs Gitcoin Ethereum Foundation</p>
@@ -256,7 +256,7 @@ const WhitePaper = () => {
               {[
                 ['Phase 1', 'Q4 2025', 'Smart contract development, audits, website launch'],
                 ['Phase 2', 'Q4 2025', 'Victim verification live, first token mint events'],
-                ['Phase 3', 'Q4 2025', 'Veritas treasury and voting opens'],
+                ['Phase 3', 'Q4 2025', 'AVERADAO treasury and voting opens'],
                 ['Phase 4', 'Q1–Q2 2026', 'Legal recovery missions, protocol revenue phase'],
                 ['Phase 5', 'Q3–Q4', 'Decentralization of core processes — from verification to voting to redemption'],
                 ['Phase 6', 'Q1 2027', 'Exchange listing (tentative), bounty program'],
@@ -274,7 +274,7 @@ const WhitePaper = () => {
         {/* Section 11 */}
         <Section title="11. Legal &amp; Ethical Notes">
           <ul style={{ listStyleType: 'disc', paddingLeft: '20px', lineHeight: '1.9' }}>
-            <li>Veritas is not an insurance service or a financial promise.</li>
+            <li>AVERADAO is not an insurance service or a financial promise.</li>
             <li>Compensation is based on donations and treasury status not guaranteed.</li>
             <li>Verifications are human reviewed initially with a goal to move toward decentralized oracle verification.</li>
           </ul>
@@ -292,14 +292,14 @@ const WhitePaper = () => {
           </ul>
           <p className="mb-2">Join us:</p>
           <ul style={{ listStyleType: 'disc', paddingLeft: '20px', lineHeight: '1.9' }}>
-            <li>Website <a href="https://veritasaid.com" style={{ color: '#2563eb' }}>veritasaid.com</a></li>
+            <li>Website <a href="https://___AVERADAO_DOMAIN___" style={{ color: '#2563eb' }}>___AVERADAO_DOMAIN___</a></li>
             <li>Email <a href="mailto:support@veritasaid.com" style={{ color: '#2563eb' }}>support@veritasaid.com</a></li>
           </ul>
         </Section>
 
         {/* Section 13 */}
         <Section title="13. Conclusion">
-          <p className="mb-3">Veritas is an audacious experiment in decentralized compassion. While we can't guarantee every victim full restitution we can provide a transparent community powered and hopeful alternative to being forgotten.</p>
+          <p className="mb-3">AVERADAO is an audacious experiment in decentralized compassion. While we can't guarantee every victim full restitution we can provide a transparent community powered and hopeful alternative to being forgotten.</p>
           <p>Together we can rebuild trust in Web3 one victim at a time.</p>
         </Section>
 
@@ -307,7 +307,7 @@ const WhitePaper = () => {
         <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
           <h2 style={{ fontWeight: 'bold', fontSize: '1rem', marginBottom: '8px' }}>Legal Disclaimer</h2>
           <p style={{ fontSize: '0.85rem', color: '#555', lineHeight: '1.7' }}>
-            This document is for informational purposes only and does not constitute financial legal or investment advice. Veritas does not guarantee compensation profits or recovery outcomes. All verifications and reward distributions are subject to governance and treasury availability. Participation in Veritas is voluntary and at ones own risk.
+            This document is for informational purposes only and does not constitute financial legal or investment advice. AVERADAO does not guarantee compensation profits or recovery outcomes. All verifications and reward distributions are subject to governance and treasury availability. Participation in AVERADAO is voluntary and at ones own risk.
           </p>
         </div>
 

@@ -28,10 +28,10 @@ const sendApplicationStatusEmail = async (to, status, link, clientTime, clientTz
       } catch (_) {}
     }
 
-    let defaultClient = (process.env.NODE_ENV === 'production') ? 'https://veritasaid.com' : (process.env.CLIENT_URL || 'http://localhost:3001');
+    let defaultClient = (process.env.NODE_ENV === 'production') ? 'https://___AVERADAO_DOMAIN___' : (process.env.CLIENT_URL || 'http://localhost:3001');
     let baseReg = (link && String(link).trim()) ? link : `${defaultClient.replace(/\/+$/, '')}/register`;
-    if (process.env.NODE_ENV === 'production' || baseReg.includes('veritasaid.com')) {
-      baseReg = baseReg.replace(/http:\/\/localhost:\d+/g, 'https://veritasaid.com');
+    if (process.env.NODE_ENV === 'production' || baseReg.includes('___AVERADAO_DOMAIN___')) {
+      baseReg = baseReg.replace(/http:\/\/localhost:\d+/g, 'https://___AVERADAO_DOMAIN___');
     }
     let regLink = baseReg;
     try {
@@ -40,45 +40,45 @@ const sendApplicationStatusEmail = async (to, status, link, clientTime, clientTz
       if (refCode) u.searchParams.set('ref', refCode);
       regLink = u.toString();
     } catch {}
-    subject = 'Your Application to Veritas has been Accepted';
+    subject = 'Your Application to AVERADAO has been Accepted';
     text = [
       'Congratulations!',
-      'Your application to join Veritas has been accepted. We are excited to have you on board.',
+      'Your application to join AVERADAO has been accepted. We are excited to have you on board.',
       'Please click the link below to complete your registration:',
       `Complete Registration: ${regLink}`,
       'If you have any questions, please don\'t hesitate to contact us.',
       'Sincerely,',
-      'The Veritas Team'
+      'The AVERADAO Team'
     ].join('\n');
     html = `
       <div style="font-family: Arial, sans-serif; padding: 20px; color: #1f2937;">
         <h2 style="margin: 0 0 12px; color: #111827;">Congratulations!</h2>
-        <p style="margin: 8px 0;">Your application to join Veritas has been accepted. We are excited to have you on board.</p>
+        <p style="margin: 8px 0;">Your application to join AVERADAO has been accepted. We are excited to have you on board.</p>
         <p style="margin: 8px 0;">Please click the link below to complete your registration:</p>
         <p style="margin: 16px 0;">
           <a href="${regLink}" style="background-color: #085464; color: #ffffff; padding: 10px 16px; text-decoration: none; border-radius: 6px; display: inline-block;">Complete Registration</a>
         </p>
         <p style="margin: 8px 0;">If you have any questions, please don\'t hesitate to contact us.</p>
         <p style="margin: 16px 0 4px;">Sincerely,</p>
-        <p style="margin: 0;">The Veritas Team</p>
+        <p style="margin: 0;">The AVERADAO Team</p>
       </div>
     `;
   } else {
-    subject = 'Update on Your Application to Veritas';
+    subject = 'Update on Your Application to AVERADAO';
     text = [
-      'Thank you for your interest in joining Veritas. After careful consideration, we regret to inform you that your application has been rejected at this time.',
+      'Thank you for your interest in joining AVERADAO. After careful consideration, we regret to inform you that your application has been rejected at this time.',
       'We appreciate the time you took to apply and wish you the best in your future endeavors.',
       'Sincerely,',
-      'The Veritas Team'
+      'The AVERADAO Team'
     ].join('\n');
     html = `
       <div style="font-family: Arial, sans-serif; padding: 20px; color: #1f2937;">
         <h2 style="margin: 0 0 12px; color: #111827;">Application Update</h2>
-        <p style="margin: 8px 0;">Thank you for your interest in joining Veritas. After careful consideration, we regret to inform you that your application has been rejected at this time.</p>
+        <p style="margin: 8px 0;">Thank you for your interest in joining AVERADAO. After careful consideration, we regret to inform you that your application has been rejected at this time.</p>
         <p style="margin: 8px 0;">We appreciate the time you took to apply and wish you the best in your future endeavors.</p>
         <div style="margin: 16px 0; display: inline-block; background-color: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 6px; padding: 10px 16px; font-weight: 600;">Application Status Update</div>
         <p style="margin: 16px 0 4px;">Sincerely,</p>
-        <p style="margin: 0;">The Veritas Team</p>
+        <p style="margin: 0;">The AVERADAO Team</p>
       </div>
     `;
   }
@@ -86,7 +86,7 @@ const sendApplicationStatusEmail = async (to, status, link, clientTime, clientTz
   try {
     const transporter = await getTransporter();
     const fromAddr = process.env.EMAIL_FROM || process.env.EMAIL_USERNAME || 'support@veritasaid.com';
-    const domain = String(fromAddr.split('@')[1] || 'veritasaid.com');
+    const domain = String(fromAddr.split('@')[1] || '___AVERADAO_DOMAIN___');
     const msgId = `<app-${Date.now()}-${Math.random().toString(36).slice(2)}@${domain}>`;
     const tz = typeof clientTzOffset === 'number' ? clientTzOffset : 0;
     const base = clientTime ? new Date(clientTime) : new Date();
@@ -100,14 +100,14 @@ const sendApplicationStatusEmail = async (to, status, link, clientTime, clientTz
     const mm = pad(abs % 60);
     const dateHeader = `${days[localDate.getUTCDay()]}, ${pad(localDate.getUTCDate())} ${months[localDate.getUTCMonth()]} ${localDate.getUTCFullYear()} ${pad(localDate.getUTCHours())}:${pad(localDate.getUTCMinutes())}:${pad(localDate.getUTCSeconds())} ${sign}${hh}${mm}`;
     const info = await transporter.sendMail({
-      from: `Veritas <${fromAddr}>`,
+      from: `AVERADAO <${fromAddr}>`,
       to,
       subject,
       html,
       text,
       replyTo: fromAddr,
       envelope: { from: fromAddr, to: to },
-      headers: { 'List-Unsubscribe': `<mailto:${fromAddr}>`, 'X-Mailer': 'Veritas System', 'Date': dateHeader },
+      headers: { 'List-Unsubscribe': `<mailto:${fromAddr}>`, 'X-Mailer': 'AVERADAO System', 'Date': dateHeader },
       messageId: msgId,
       date: localDate,
     });
@@ -143,13 +143,13 @@ router.post('/send-email', async (req, res) => {
   let result;
   try {
     const rawOrigin = req.get('origin') || req.headers.origin || '';
-    let baseOrigin = (process.env.NODE_ENV === 'production' || rawOrigin.includes('veritasaid.com'))
-      ? 'https://veritasaid.com'
+    let baseOrigin = (process.env.NODE_ENV === 'production' || rawOrigin.includes('___AVERADAO_DOMAIN___'))
+      ? 'https://___AVERADAO_DOMAIN___'
       : (rawOrigin || process.env.CLIENT_URL || 'http://localhost:3001');
     
     let effectiveLink = link;
     if (process.env.NODE_ENV === 'production' && effectiveLink && effectiveLink.includes('localhost')) {
-      effectiveLink = effectiveLink.replace(/http:\/\/localhost:\d+/g, 'https://veritasaid.com');
+      effectiveLink = effectiveLink.replace(/http:\/\/localhost:\d+/g, 'https://___AVERADAO_DOMAIN___');
     }
     const statusNorm = String(status || '').toLowerCase();
     if (statusNorm === 'accepted') {
@@ -265,7 +265,7 @@ router.post('/contact', async (req, res) => {
           <h4 style="margin: 0 0 8px; color: #374151;">Message:</h4>
           <p style="margin: 0; white-space: pre-wrap; color: #1f2937;">${message}</p>
         </div>
-        <p style="font-size: 12px; color: #6b7280; margin-top: 20px;">This email was routed automatically from the Veritas website contact form to support@veritasaid.com.</p>
+        <p style="font-size: 12px; color: #6b7280; margin-top: 20px;">This email was routed automatically from the AVERADAO website contact form to support@veritasaid.com.</p>
       </div>
     `;
 
@@ -284,18 +284,18 @@ router.post('/contact', async (req, res) => {
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #1f2937; max-width: 600px;">
           <h3 style="color: #085464; margin-top: 0;">We Received Your Message</h3>
           <p>Hi ${name},</p>
-          <p>Thank you for contacting <strong>Veritas Support</strong>. We have received your inquiry and our support team will respond to your email as soon as possible.</p>
+          <p>Thank you for contacting <strong>AVERADAO Support</strong>. We have received your inquiry and our support team will respond to your email as soon as possible.</p>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
           <p style="font-size: 13px; color: #6b7280; margin: 0;"><strong>Your Message Details:</strong></p>
           <p style="font-size: 13px; color: #4b5563; font-style: italic;">"${message}"</p>
           <br />
-          <p style="font-size: 14px; color: #374151;">Best regards,<br /><strong>Veritas Support Team</strong></p>
+          <p style="font-size: 14px; color: #374151;">Best regards,<br /><strong>AVERADAO Support Team</strong></p>
         </div>
       `;
       await sendEmail({
         email: email,
-        subject: `Message Received - Veritas Support`,
-        message: `Hi ${name}, Thank you for contacting Veritas Support. We have received your message and will reply shortly.`,
+        subject: `Message Received - AVERADAO Support`,
+        message: `Hi ${name}, Thank you for contacting AVERADAO Support. We have received your message and will reply shortly.`,
         html: userReplyHtml
       });
     } catch (userMailErr) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { getUsersList as dsGetUsersList, getUserMeta as dsGetUserMeta } from '../../../utils/datastore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -136,7 +136,7 @@ const RealDataCard = React.memo(({ user, onLoadVoteHistory, onLoadReferrals }) =
           <div className="text-xs text-gray-600">Unverified Loss</div>
           <div className="text-xl font-bold text-gray-900">${uvLoss.toLocaleString()}</div>
         </div>
-        <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+        <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
           <div className="text-xs text-gray-600">Restituted</div>
           <div className="text-xl font-bold text-gray-900">${restituted.toLocaleString()}</div>
         </div>
@@ -1258,13 +1258,13 @@ const UserProfileManagement = () => {
               </div>
               <div className="flex flex-col">
                 <p className="text-[10px] text-gray-400 font-black uppercase tracking-tighter">Referral</p>
-                <p className="text-sm font-black text-emerald-600">{user.points.referral || 0}</p>
+                <p className="text-sm font-black text-blue-600">{user.points.referral || 0}</p>
               </div>
             </div>
 
             <div className="flex items-center justify-between mt-1">
               <div className="flex items-center gap-2">
-                <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${user.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
+                <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${user.status === 'active' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
                   {user.status}
                 </span>
               </div>
@@ -1279,7 +1279,7 @@ const UserProfileManagement = () => {
                 ) : (
                   <button
                     onClick={() => handleStatusUpdate(user.id, 'active')}
-                    className="px-4 py-2 bg-emerald-50 text-emerald-600 text-xs font-black uppercase tracking-widest rounded-xl border border-emerald-100"
+                    className="px-4 py-2 bg-blue-50 text-blue-600 text-xs font-black uppercase tracking-widest rounded-xl border border-blue-100"
                   >
                     Activate
                   </button>
@@ -1351,7 +1351,7 @@ const UserProfileManagement = () => {
                   </td>
 
                   <td className="px-4 py-5 text-center">
-                    <div className="text-lg font-black text-emerald-600 tracking-tight">{user.points.referral || 0}</div>
+                    <div className="text-lg font-black text-blue-600 tracking-tight">{user.points.referral || 0}</div>
                   </td>
 
                   <td className="pl-4 pr-8 py-5">
@@ -1385,7 +1385,7 @@ const UserProfileManagement = () => {
                           onClick={() => handleStatusUpdate(user.id, 'active')}
                           whileHover={{ scale: 1.1, backgroundColor: '#ecfdf5' }}
                           whileTap={{ scale: 0.95 }}
-                          className="p-3 text-emerald-600 rounded-2xl hover:shadow-lg hover:shadow-emerald-50 transition-all border border-transparent hover:border-emerald-100"
+                          className="p-3 text-blue-600 rounded-2xl hover:shadow-lg hover:shadow-blue-50 transition-all border border-transparent hover:border-blue-100"
                           title="Grant Entry"
                         >
                           <CheckCircle className="w-5 h-5" />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
@@ -139,7 +139,7 @@ const Login = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="input-field pl-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500"
+                  className="input-field pl-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-blue-500"
                   placeholder="Enter your email"
                 />
               </div>
@@ -163,7 +163,7 @@ const Login = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="input-field pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500"
+                  className="input-field pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-blue-500"
                   placeholder="Enter your password"
                 />
                 <button
@@ -191,7 +191,7 @@ const Login = () => {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
 
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">

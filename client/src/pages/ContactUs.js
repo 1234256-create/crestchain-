@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, MapPin, Send, MessageSquare, CheckCircle2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
@@ -69,7 +69,7 @@ const ContactUs = () => {
             Direct Support
           </span>
           <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-            Contact Veritas Support
+            Contact AVERADAO Support
           </h1>
           <p className="text-sky-100 text-base md:text-lg leading-relaxed">
             Have questions about refund programs, claims, or protocol verification? Send us a message and our support team will get back to you promptly.
@@ -87,14 +87,14 @@ const ContactUs = () => {
 
               <div className="space-y-4">
                 <div className="flex items-start gap-4 p-3.5 rounded-xl bg-slate-800/40 border border-slate-800">
-                  <div className="p-2.5 rounded-lg bg-[#085464] text-cyan-300 shrink-0">
+                  <div className="p-2.5 rounded-lg bg-[#0f172a] text-sky-300 shrink-0">
                     <Mail className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Direct Email</h4>
                     <a
                       href="mailto:support@veritasaid.com"
-                      className="text-sm font-semibold text-cyan-300 hover:text-cyan-200 break-all transition-colors"
+                      className="text-sm font-semibold text-sky-300 hover:text-sky-200 break-all transition-colors"
                     >
                       support@veritasaid.com
                     </a>
@@ -102,13 +102,13 @@ const ContactUs = () => {
                 </div>
 
                 <div className="flex items-start gap-4 p-3.5 rounded-xl bg-slate-800/40 border border-slate-800">
-                  <div className="p-2.5 rounded-lg bg-[#085464] text-cyan-300 shrink-0">
+                  <div className="p-2.5 rounded-lg bg-[#0f172a] text-sky-300 shrink-0">
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div className="space-y-2">
                     {companyAddress && (
                       <div>
-                        <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Administrative Office</h4>
+                        <h4 className="text-xs font-bold text-blue-400 uppercase tracking-wider">Administrative Office</h4>
                         <p className="text-sm font-medium text-slate-200 leading-snug whitespace-pre-line">
                           {companyAddress}
                         </p>
@@ -147,7 +147,7 @@ const ContactUs = () => {
                 <p className="font-semibold text-amber-300 mb-1 flex items-center gap-1.5">
                   <AlertCircle className="w-4 h-4" /> Security Notice
                 </p>
-                Veritas support will never ask for your private keys or seed phrase. All official support messages route to support@veritasaid.com.
+                AVERADAO support will never ask for your private keys or seed phrase. All official support messages route to support@veritasaid.com.
               </div>
             </div>
           </div>
@@ -157,12 +157,12 @@ const ContactUs = () => {
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl backdrop-blur-sm">
               {submitted ? (
                 <div className="py-12 text-center space-y-4">
-                  <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto">
+                  <div className="w-16 h-16 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
                   <h3 className="text-2xl font-bold text-white">Message Sent Successfully!</h3>
                   <p className="text-slate-300 text-sm max-w-md mx-auto">
-                    Your inquiry has been routed directly to <span className="font-semibold text-cyan-300">support@veritasaid.com</span>. Our support team will review and reply to your email shortly.
+                    Your inquiry has been routed directly to <span className="font-semibold text-sky-300">support@veritasaid.com</span>. Our support team will review and reply to your email shortly.
                   </p>
                   <button
                     onClick={() => setSubmitted(false)}
@@ -189,7 +189,7 @@ const ContactUs = () => {
                         placeholder="John Doe"
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm font-medium text-white transition-all"
+                        className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-medium text-white transition-all"
                       />
                     </div>
 
@@ -203,7 +203,7 @@ const ContactUs = () => {
                         placeholder="john@example.com"
                         value={form.email}
                         onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm font-medium text-white transition-all"
+                        className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-medium text-white transition-all"
                       />
                     </div>
                   </div>
@@ -217,7 +217,7 @@ const ContactUs = () => {
                       placeholder="Inquiry about refund claim / case status"
                       value={form.subject}
                       onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm font-medium text-white transition-all"
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-medium text-white transition-all"
                     />
                   </div>
 
@@ -231,7 +231,7 @@ const ContactUs = () => {
                       placeholder="Type your message or inquiry here..."
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm font-medium text-white transition-all"
+                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-medium text-white transition-all"
                     />
                   </div>
 
@@ -241,7 +241,7 @@ const ContactUs = () => {
                       disabled={loading}
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.99 }}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#085464] to-[#06b6d4] text-white font-bold text-sm shadow-lg shadow-cyan-950/40 hover:brightness-110 transition-all disabled:opacity-50 cursor-pointer"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#0f172a] to-[#06b6d4] text-white font-bold text-sm shadow-lg shadow-blue-950/40 hover:brightness-110 transition-all disabled:opacity-50 cursor-pointer"
                     >
                       <Send className="w-4 h-4" />
                       {loading ? 'Sending Message...' : 'Send Message to support@veritasaid.com'}

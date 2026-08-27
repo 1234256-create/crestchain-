@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { getJoinApplications } from '../../../utils/datastore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, X, Mail } from 'lucide-react';
@@ -205,7 +205,7 @@ const JoinApplications = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {(app.hasAccount || app.status === 'registered' || app.status === 'accepted') ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300">
                         ✓ Registered
                       </span>
                     ) : (

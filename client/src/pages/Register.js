@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
@@ -148,7 +148,7 @@ const Register = () => {
             </p>
           </div>
           <div className="mt-6 pt-6 border-t border-white/10">
-            <Link to="/login" className="text-teal-400 hover:text-teal-300 font-medium transition-colors">
+            <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
               Return to Login
             </Link>
           </div>
@@ -192,7 +192,7 @@ const Register = () => {
                     required
                     value={formData.firstName}
                     onChange={handleChange}
-                    className={`input-field pl-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500 ${isAutoFilled ? 'cursor-not-allowed opacity-90' : ''} ${serverErrors.some(e => e.path === 'firstName') ? 'border-red-500' : ''}`}
+                    className={`input-field pl-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-blue-500 ${isAutoFilled ? 'cursor-not-allowed opacity-90' : ''} ${serverErrors.some(e => e.path === 'firstName') ? 'border-red-500' : ''}`}
                     placeholder="First name"
                     readOnly={isAutoFilled}
                   />
@@ -213,7 +213,7 @@ const Register = () => {
                   required
                   value={formData.lastName}
                   onChange={handleChange}
-                  className={`input-field bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500 ${isAutoFilled ? 'cursor-not-allowed opacity-90' : ''} ${formData.lastName && formData.lastName.trim().length < 2 ? 'border-red-500' : ''} ${serverErrors.some(e => e.path === 'lastName') ? 'border-red-500' : ''}`}
+                  className={`input-field bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-blue-500 ${isAutoFilled ? 'cursor-not-allowed opacity-90' : ''} ${formData.lastName && formData.lastName.trim().length < 2 ? 'border-red-500' : ''} ${serverErrors.some(e => e.path === 'lastName') ? 'border-red-500' : ''}`}
                   placeholder="Last name"
                   readOnly={isAutoFilled}
                 />
@@ -241,7 +241,7 @@ const Register = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className={`input-field pl-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500 ${emailLocked ? 'cursor-not-allowed opacity-90' : ''}`}
+                  className={`input-field pl-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-blue-500 ${emailLocked ? 'cursor-not-allowed opacity-90' : ''}`}
                   readOnly={emailLocked}
                   placeholder="Enter your email"
                 />
@@ -269,7 +269,7 @@ const Register = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className={`input-field pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500 ${serverErrors.some(e => e.path === 'password') ? 'border-red-500' : ''}`}
+                  className={`input-field pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-blue-500 ${serverErrors.some(e => e.path === 'password') ? 'border-red-500' : ''}`}
                   placeholder="Create a password"
                 />
                 <button
@@ -327,7 +327,7 @@ const Register = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`input-field pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-teal-500 ${formData.confirmPassword && !passwordsMatch ? 'border-red-500' : ''
+                  className={`input-field pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:ring-blue-500 ${formData.confirmPassword && !passwordsMatch ? 'border-red-500' : ''
                     } ${serverErrors.some(e => e.path === 'confirmPassword') ? 'border-red-500' : ''}`}
                   placeholder="Confirm your password"
                 />
@@ -355,15 +355,15 @@ const Register = () => {
                 type="checkbox"
                 checked={acceptTerms}
                 onChange={(e) => setAcceptTerms(e.target.checked)}
-                className="h-4 w-4 text-purple-600 focus:ring-teal-500 border-gray-300 rounded"
+                className="h-4 w-4 text-purple-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="accept-terms" className="ml-2 block text-sm text-gray-300">
                 I accept the{' '}
-                <Link to="/privacy" className="text-teal-400 hover:text-teal-300">
+                <Link to="/privacy" className="text-blue-400 hover:text-blue-300">
                   Privacy Policy
                 </Link>{' '}
                 and{' '}
-                <Link to="/terms" className="text-teal-400 hover:text-teal-300">
+                <Link to="/terms" className="text-blue-400 hover:text-blue-300">
                   Terms of Service
                 </Link>
                 *
@@ -409,7 +409,7 @@ const Register = () => {
               Already have an account?{' '}
               <Link
                 to="/login"
-                className="font-medium text-teal-400 hover:text-teal-300 transition-colors"
+                className="font-medium text-blue-400 hover:text-blue-300 transition-colors"
               >
                 Log in
               </Link>

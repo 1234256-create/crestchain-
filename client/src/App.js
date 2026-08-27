@@ -51,8 +51,8 @@ const ProtectedRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#0a1628] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -71,8 +71,8 @@ const PublicRoute = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#0a1628] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -89,7 +89,7 @@ const PublicRoute = ({ children }) => {
 // Layout Component
 const Layout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a] flex flex-col">
+    <div className="min-h-screen bg-[#0a1628] flex flex-col">
       <Navbar />
       <main className="pt-16 flex-1">
         <div className="w-full">

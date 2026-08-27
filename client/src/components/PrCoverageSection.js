@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { ExternalLink, Award } from 'lucide-react';
 import axios from 'axios';
 
@@ -46,7 +46,7 @@ const PrCoverageSection = () => {
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative flex items-center gap-2.5 px-4 py-2.5 bg-white hover:bg-sky-50/80 border border-gray-200 hover:border-[#00A4E4]/40 rounded-xl transition-all duration-300 shadow-xs hover:shadow-md active:scale-95"
+              className="group relative flex items-center gap-2.5 px-4 py-2.5 bg-white hover:bg-sky-50/80 border border-gray-200 hover:border-[#3b82f6]/40 rounded-xl transition-all duration-300 shadow-xs hover:shadow-md active:scale-95"
               title={`Read PR coverage on ${item.title}`}
             >
               <div className="w-6 h-6 rounded-lg bg-gray-50 p-0.5 flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
@@ -57,10 +57,10 @@ const PrCoverageSection = () => {
                   onError={(e) => { e.target.onerror = null; e.target.src = 'https://img.icons8.com/color/144/news.png'; }}
                 />
               </div>
-              <span className="text-xs sm:text-sm font-semibold text-gray-800 group-hover:text-[#00A4E4] transition-colors">
+              <span className="text-xs sm:text-sm font-semibold text-gray-800 group-hover:text-[#3b82f6] transition-colors">
                 {item.title}
               </span>
-              <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-[#00A4E4] opacity-0 group-hover:opacity-100 transition-all duration-200" />
+              <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-[#3b82f6] opacity-0 group-hover:opacity-100 transition-all duration-200" />
             </a>
           ))}
         </div>

@@ -7,8 +7,8 @@ async function testRealSend() {
     const res = await sendEmail({
       email: 'support@veritasaid.com',
       subject: 'Test Email Verification',
-      message: 'This is a test email sent from Veritas backend to verify Hostinger SMTP delivery.',
-      html: '<p>This is a <b>test email</b> sent from Veritas backend to verify Hostinger SMTP delivery.</p>'
+      message: 'This is a test email sent from AVERADAO backend to verify Hostinger SMTP delivery.',
+      html: '<p>This is a <b>test email</b> sent from AVERADAO backend to verify Hostinger SMTP delivery.</p>'
     });
     console.log('SUCCESS! Email sent:', res.response);
   } catch (err) {

@@ -7,36 +7,36 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          50: '#ecfeff',
-          100: '#cffafe',
-          200: '#a5f3fc',
-          300: '#67e8f9',
-          400: '#22d3ee',
-          500: '#06b6d4',
-          600: '#0891b2',
-          700: '#0e7490',
-          800: '#155e75',
-          900: '#164e63',
-          950: '#083344',
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+          950: '#172554',
         },
-        ocean: {
-          highlight: '#34d399',
-          teal: '#059669',
-          mid: '#047857',
-          deep: '#02141a',
-          abyss: '#010c10',
+        navy: {
+          highlight: '#60a5fa',
+          mid: '#1d4ed8',
+          deep: '#0f172a',
+          abyss: '#0a1628',
+          card: '#1a2744',
         },
         gradient: {
-          start: '#047857',
-          middle: '#059669',
-          end: '#02141a'
+          start: '#1d4ed8',
+          middle: '#1e40af',
+          end: '#0f172a'
         }
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'hero-gradient': 'linear-gradient(135deg, #044e54 0%, #032b30 45%, #011417 100%)',
-        'card-gradient': 'linear-gradient(145deg, rgba(5,150,105,0.2) 0%, rgba(4,120,87,0.6) 100%)',
+        'hero-gradient': 'linear-gradient(135deg, #0a1628 0%, #0f172a 45%, #1a2744 100%)',
+        'card-gradient': 'linear-gradient(145deg, rgba(29,78,216,0.2) 0%, rgba(30,64,175,0.6) 100%)',
       },
 
 

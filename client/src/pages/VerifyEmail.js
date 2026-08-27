@@ -39,7 +39,7 @@ const VerifyEmail = () => {
 
                     setStatus('success');
                     setMessage(response.data.message || 'Email verified successfully!');
-                    toast.success('Email verified! Welcome to Veritas.');
+                    toast.success('Email verified! Welcome to AVERADAO.');
 
                     // Redirect to dashboard after a short delay
                     setTimeout(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -314,9 +314,9 @@ const PointsRanking = () => {
       'Early Adopter': 'bg-purple-100 text-purple-800',
       'Big Contributor': 'bg-orange-100 text-orange-800',
       'Reliable Voter': 'bg-indigo-100 text-indigo-800',
-      'Active Voter': 'bg-cyan-100 text-cyan-800',
-      'Growing Fast': 'bg-emerald-100 text-emerald-800',
-      'Steady Contributor': 'bg-teal-100 text-teal-800',
+      'Active Voter': 'bg-sky-100 text-blue-800',
+      'Growing Fast': 'bg-blue-100 text-blue-800',
+      'Steady Contributor': 'bg-blue-100 text-blue-800',
       'Rising Star': 'bg-yellow-100 text-yellow-800',
       'Creative Mind': 'bg-pink-100 text-pink-800',
       'Tech Enthusiast': 'bg-violet-100 text-violet-800',

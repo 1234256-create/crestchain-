@@ -320,9 +320,9 @@ router.post('/send-invite', adminAuth, [
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
-      <h2 style="color: #085464;">Welcome to Veritas</h2>
+      <h2 style="color: #085464;">Welcome to AVERADAO</h2>
       <p>Hi ${name},</p>
-      <p>Thank you for your interest in joining <strong>Veritas</strong>. We have reviewed your application and would like to invite you to join our platform.</p>
+      <p>Thank you for your interest in joining <strong>AVERADAO</strong>. We have reviewed your application and would like to invite you to join our platform.</p>
       <p>To complete your registration and gain access to the dashboard, please click the button below:</p>
       
       <div style="text-align: center; margin: 30px 0;">
@@ -332,7 +332,7 @@ router.post('/send-invite', adminAuth, [
       <p style="font-size: 14px; color: #777;">If you did not submit this request, you can safely ignore this email.</p>
       <br />
       <hr style="border: none; border-top: 1px solid #eee;" />
-      <p style="font-size: 14px; color: #777;">Best regards,<br />The Veritas Team</p>
+      <p style="font-size: 14px; color: #777;">Best regards,<br />The AVERADAO Team</p>
     </div>
   `;
 
@@ -342,7 +342,7 @@ router.post('/send-invite', adminAuth, [
     // Send invite in background
     sendEmail({
       email,
-      subject: 'Complete your Veritas Registration',
+      subject: 'Complete your AVERADAO Registration',
       message: `Hi ${name}, Finish your registration at: ${signupLink}`,
       html
     }).then(info => {

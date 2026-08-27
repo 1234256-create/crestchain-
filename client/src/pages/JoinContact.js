@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getJoinWizard, setJoinWizard } from '../utils/datastore';
@@ -95,13 +95,13 @@ const JoinContact = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a]">
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0a1628]">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="rounded-2xl bg-[#031d24]/80 backdrop-blur-lg border border-cyan-500/20 p-8 text-white shadow-2xl shadow-cyan-950/60"
+          className="rounded-2xl bg-[#031d24]/80 backdrop-blur-lg border border-blue-500/20 p-8 text-white shadow-2xl shadow-blue-950/60"
         >
           <h1 className="text-2xl md:text-3xl font-bold mb-6">Contact & Address</h1>
 
@@ -114,7 +114,7 @@ const JoinContact = () => {
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="you@example.com"
               />
             </div>
@@ -127,7 +127,7 @@ const JoinContact = () => {
                   name="countryCode"
                   value={form.countryCode}
                   onChange={handleChange}
-                  className="col-span-1 px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="col-span-1 px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   placeholder="+1"
                 />
                 <input
@@ -135,7 +135,7 @@ const JoinContact = () => {
                   name="phone"
                   value={form.phone}
                   onChange={handleChange}
-                  className="col-span-2 px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="col-span-2 px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   placeholder="555-123-4567"
                 />
               </div>
@@ -148,7 +148,7 @@ const JoinContact = () => {
                 name="telegramUsername"
                 value={form.telegramUsername}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="@yourusername"
               />
             </div>
@@ -160,7 +160,7 @@ const JoinContact = () => {
                 name="address1"
                 value={form.address1}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="123 Main St"
               />
             </div>
@@ -172,7 +172,7 @@ const JoinContact = () => {
                 name="address2"
                 value={form.address2}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Apt, suite, unit, building, floor, etc."
               />
             </div>
@@ -185,7 +185,7 @@ const JoinContact = () => {
                   name="city"
                   value={form.city}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   placeholder="San Francisco"
                 />
               </div>
@@ -196,7 +196,7 @@ const JoinContact = () => {
                   name="stateProvince"
                   value={form.stateProvince}
                   onChange={handleChange}
-                  className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   placeholder="CA"
                 />
               </div>
@@ -209,7 +209,7 @@ const JoinContact = () => {
                 name="postalCode"
                 value={form.postalCode}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                className="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="94103"
               />
             </div>
@@ -227,7 +227,7 @@ const JoinContact = () => {
               type="button"
               onClick={handleNext}
               disabled={!requiredFilled}
-              className={`px-6 py-2.5 rounded-lg font-semibold bg-gradient-to-r from-[#086a7e] to-[#0e7490] text-white shadow-md shadow-cyan-950/50 transition ${requiredFilled ? 'hover:from-[#097d95] hover:to-[#0891b2]' : 'opacity-50 cursor-not-allowed'
+              className={`px-6 py-2.5 rounded-lg font-semibold bg-gradient-to-r from-[#1e40af] to-[#1d4ed8] text-white shadow-md shadow-blue-950/50 transition ${requiredFilled ? 'hover:from-[#2563eb] hover:to-[#3b82f6]' : 'opacity-50 cursor-not-allowed'
                 }`}
             >
               Next

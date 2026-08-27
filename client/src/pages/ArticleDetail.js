@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, FileText } from 'lucide-react';
@@ -62,14 +62,14 @@ const ArticleDetail = () => {
       <div className="min-h-screen w-full overflow-x-hidden bg-white">
         <div className="w-full min-w-0 mobile-padding py-20">
           <div className="mx-auto max-w-md min-w-0 rounded-xl border border-gray-200 bg-white px-8 py-12 text-center shadow-sm">
-            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-[#00A4E4] to-[#38bdf8] text-white">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-[#3b82f6] to-[#38bdf8] text-white">
               <FileText className="h-7 w-7" />
             </div>
             <h1 className="text-xl font-bold text-gray-900">Article not found</h1>
             <p className="mt-2 text-gray-600">This article may have been removed or is not available.</p>
             <Link
               to="/"
-              className="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#00A4E4] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#38bdf8]"
+              className="mt-8 inline-flex items-center gap-2 rounded-lg bg-[#3b82f6] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#38bdf8]"
             >
               <ArrowLeft size={18} />
               Back to home
@@ -91,14 +91,14 @@ const ArticleDetail = () => {
         <div className="w-full max-w-7xl mx-auto min-w-0 px-8 md:px-12 lg:px-16 py-8 md:py-10">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-[#00A4E4]"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-[#3b82f6]"
           >
             <ArrowLeft size={16} />
             Back to home
           </Link>
 
           <div className="mx-auto mt-10 max-w-3xl min-w-0 text-center">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-[#00A4E4] to-[#38bdf8] text-white shadow-sm">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-[#3b82f6] to-[#38bdf8] text-white shadow-sm">
               <FileText size={32} className="text-white" strokeWidth={1.5} aria-hidden />
             </div>
             <motion.h1

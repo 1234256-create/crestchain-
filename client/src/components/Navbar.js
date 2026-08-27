@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -12,7 +12,6 @@ import {
   Settings,
   LogOut,
   Shield,
-  FileText,
   LogIn,
   Mail
 } from 'lucide-react';
@@ -47,8 +46,6 @@ const Navbar = () => {
     }
   };
 
-  const logoPath = '/images/logo.svg';
-
   const [canContribute, setCanContribute] = useState(false);
 
   React.useEffect(() => {
@@ -67,14 +64,10 @@ const Navbar = () => {
         const hasRound = Boolean(round && round.startTime && round.endTime && nowMs <= new Date(round.endTime).getTime());
 
         setCanContribute(isActive && (isPublic || hasRound));
-      } catch (error) {
-        // Silently fail, default to false
-      }
+      } catch (error) {}
     };
 
     checkContributionStatus();
-
-    // Listen for updates via custom event if any
     const handleUpdate = () => checkContributionStatus();
     window.addEventListener('datastore:update', handleUpdate);
     return () => window.removeEventListener('datastore:update', handleUpdate);
@@ -98,8 +91,6 @@ const Navbar = () => {
     return true;
   });
 
-
-
   const adminItems = [
     { name: 'Admin Panel', path: '/admin', icon: Shield },
     { name: 'User Management', path: '/admin/users', icon: User },
@@ -110,79 +101,58 @@ const Navbar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#02141a]/85 backdrop-blur-md border-b border-cyan-500/20">
+    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b" style={{ background: 'rgba(10, 22, 40, 0.92)', borderColor: 'rgba(59, 130, 246, 0.2)' }}>
       <div className="w-full pl-0 pr-4 sm:pr-6 lg:pr-8">
         <div className="flex items-center justify-between h-16 overflow-visible flex-nowrap">
+          {/* Logo */}
           <div className="flex items-center flex-shrink-0 pl-4 sm:pl-6">
             <Link to="/" className="flex items-center gap-2.5 py-1 group">
               <img
                 src="/images/logo.png"
-                alt="Veritas Logo"
+                alt="Averadao Logo"
                 className="h-10 sm:h-11 w-auto max-h-11 object-contain group-hover:scale-105 transition-transform duration-200 py-0.5"
               />
-              <span className="text-xl sm:text-2xl font-extrabold tracking-wider text-white group-hover:text-cyan-400 transition-colors">
-                Veritas
+              <span className="text-xl sm:text-2xl font-extrabold tracking-wider text-white group-hover:text-blue-400 transition-colors">
+                Averadao
               </span>
             </Link>
           </div>
 
-
-
-
-
-          <div className="hidden md:flex flex-1 items-center justify-center space-x-8 min-w-0">
+          {/* Desktop Nav Items */}
+          <div className="hidden md:flex flex-1 items-center justify-center space-x-6 min-w-0">
             {filteredNavItems.map((item) => {
               const Icon = item.icon;
-
-              // For protected routes when user is not logged in, redirect to login
-              if (item.protected && !user) {
-                return (
-                  <Link
-                    key={item.name}
-                    to="/login"
-                    className="flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 text-gray-300 hover:text-white hover:bg-cyan-950/50"
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.name}</span>
-                  </Link>
-                );
-              }
-
-              const isContact = item.name === 'Contact Us';
               return (
                 <Link
                   key={item.name}
                   to={item.path}
-                  className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 ${isActive(item.path)
-                    ? isContact
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-sm shadow-emerald-500/20 font-semibold'
-                      : 'bg-emerald-500/20 text-white border border-emerald-500/30 shadow-sm shadow-emerald-500/20 font-bold'
-                    : isContact
-                      ? 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/50 font-semibold'
-                      : 'text-white hover:text-emerald-200 hover:bg-emerald-950/50 font-medium'
-                    }`}
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
+                    isActive(item.path)
+                      ? 'bg-blue-600/25 text-blue-300 border border-blue-500/35 shadow-sm shadow-blue-500/20 font-bold'
+                      : 'text-blue-100/90 hover:text-white hover:bg-blue-900/35'
+                  }`}
                 >
-                  <Icon className={`w-4 h-4 ${isContact ? 'text-emerald-400' : 'text-white'}`} />
+                  <Icon className="w-4 h-4 text-blue-400" />
                   <span>{item.name}</span>
                 </Link>
               );
             })}
           </div>
 
-          {/* User Menu */}
-          <div className="hidden md:flex items-center space-x-4 flex-shrink-0">
+          {/* Right Action / User Profile */}
+          <div className="hidden md:flex items-center space-x-3 flex-shrink-0">
             {user ? (
               <div className="relative">
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-[#041c24]/90 border border-emerald-500/30 hover:bg-[#07323e] transition-all duration-200"
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-blue-950/60 border border-blue-500/30 hover:bg-blue-900/60 transition-all duration-200"
                 >
-                  <div className="w-8 h-8 bg-gradient-to-r from-emerald-600 to-teal-500 rounded-full flex items-center justify-center shadow-sm shadow-emerald-500/30">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg, #1d4ed8, #2563eb)' }}>
                     <span className="text-white text-sm font-medium">
                       {(user.fullName || user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim()).charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <span className="text-white">{user.fullName || user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim()}</span>
+                  <span className="text-white text-sm font-medium">{user.fullName || user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim()}</span>
                 </button>
 
                 <AnimatePresence>
@@ -191,89 +161,93 @@ const Navbar = () => {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 mt-2 w-48 bg-[#031c23]/95 backdrop-blur-md rounded-lg border border-cyan-500/30 shadow-xl"
+                      className="absolute right-0 mt-2 w-48 rounded-xl border border-blue-500/30 shadow-2xl p-2"
+                      style={{ background: 'rgba(15, 23, 42, 0.96)', backdropFilter: 'blur(16px)' }}
                     >
-                      <div className="p-2">
-                        <Link
-                          to="/profile"
-                          className="flex items-center space-x-2 px-3 py-2 rounded-lg text-white hover:text-cyan-200 hover:bg-cyan-950/50 transition-all duration-200"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <User className="w-4 h-4 text-white" />
-                          <span>Profile</span>
-                        </Link>
+                      <Link
+                        to="/profile"
+                        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-blue-900/40 transition-all text-sm"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        <User className="w-4 h-4 text-blue-400" />
+                        <span>Profile</span>
+                      </Link>
 
-                        {user.role === 'admin' && (
-                          <>
-                            <div className="border-t border-cyan-500/20 my-2"></div>
-                            {adminItems.map((item) => {
-                              const Icon = item.icon;
-                              return (
-                                <Link
-                                  key={item.name}
-                                  to={item.path}
-                                  className="flex items-center space-x-2 px-3 py-2 rounded-lg text-white hover:text-cyan-200 hover:bg-cyan-950/50 transition-all duration-200"
-                                  onClick={() => setIsProfileOpen(false)}
-                                >
-                                  <Icon className="w-4 h-4 text-white" />
-                                  <span>{item.name}</span>
-                                </Link>
-                              );
-                            })}
-                          </>
-                        )}
+                      {user.role === 'admin' && (
+                        <>
+                          <div className="border-t border-blue-500/20 my-1.5"></div>
+                          {adminItems.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                              <Link
+                                key={item.name}
+                                to={item.path}
+                                className="flex items-center space-x-2 px-3 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-blue-900/40 transition-all text-sm"
+                                onClick={() => setIsProfileOpen(false)}
+                              >
+                                <Icon className="w-4 h-4 text-blue-400" />
+                                <span>{item.name}</span>
+                              </Link>
+                            );
+                          })}
+                        </>
+                      )}
 
-                        <div className="border-t border-cyan-500/20 my-2"></div>
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center space-x-2 px-3 py-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 w-full"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          <span>Logout</span>
-                        </button>
-                      </div>
+                      <div className="border-t border-blue-500/20 my-1.5"></div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-sm w-full"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout</span>
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2.5">
                 <Link
                   to="/"
-                  className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg transition-all duration-200 shadow-sm ${
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all text-sm ${
                     isActive('/')
-                      ? 'bg-emerald-500/15 text-white border border-emerald-500/25 shadow-sm font-bold'
-                      : 'text-white hover:text-emerald-200 bg-white/10 hover:bg-emerald-950/50 font-medium'
+                      ? 'bg-blue-600/25 text-blue-300 border border-blue-500/35 font-bold'
+                      : 'text-blue-100 hover:text-white hover:bg-blue-900/40 font-medium'
                   }`}
                 >
-                  <Home className="w-4 h-4 text-white" />
+                  <Home className="w-4 h-4 text-blue-400" />
                   <span>Home</span>
                 </Link>
                 <Link
                   to="/contact"
-                  className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg transition-all duration-200 shadow-sm ${
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all text-sm ${
                     isActive('/contact')
-                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shadow-sm font-semibold'
-                      : 'text-emerald-400 hover:text-emerald-300 bg-white/10 hover:bg-emerald-950/50 font-semibold'
+                      ? 'bg-blue-600/25 text-blue-300 border border-blue-500/35 font-bold'
+                      : 'text-blue-100 hover:text-white hover:bg-blue-900/40 font-medium'
                   }`}
                 >
-                  <Mail className="w-4 h-4 text-emerald-400" />
+                  <Mail className="w-4 h-4 text-blue-400" />
                   <span>Contact Us</span>
                 </Link>
                 <Link
                   to="/login"
-                  className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg transition-all duration-200 shadow-sm ${
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all text-sm ${
                     isActive('/login')
-                      ? 'bg-emerald-500/15 text-white border border-emerald-500/25 shadow-sm font-bold'
-                      : 'text-white hover:text-emerald-200 bg-white/10 hover:bg-emerald-950/50 font-medium'
+                      ? 'bg-blue-600/25 text-blue-300 border border-blue-500/35 font-bold'
+                      : 'text-blue-100 hover:text-white hover:bg-blue-900/40 font-medium'
                   }`}
                 >
-                  <LogIn className="w-4 h-4 text-white" />
+                  <LogIn className="w-4 h-4 text-blue-400" />
                   <span>Login</span>
                 </Link>
                 <button
                   onClick={handleJoinNow}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-400 text-slate-950 font-extrabold hover:from-emerald-400 hover:to-teal-300 transition-all duration-200 shadow-lg shadow-emerald-950/50 text-sm"
+                  className="px-4 py-2 rounded-xl text-white font-extrabold text-sm shadow-lg transition-all cursor-pointer"
+                  style={{
+                    background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #1e40af 100%)',
+                    border: '1px solid rgba(147, 197, 253, 0.35)',
+                    boxShadow: '0 4px 15px rgba(29, 78, 216, 0.4)'
+                  }}
                 >
                   Request a refund
                 </button>
@@ -281,14 +255,11 @@ const Navbar = () => {
             )}
           </div>
 
-
-
-
           {/* Mobile menu button */}
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-300 hover:text-white p-2"
+              className="text-blue-200 hover:text-white p-2"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -303,68 +274,53 @@ const Navbar = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-[#02141a]/95 backdrop-blur-md border-t border-cyan-500/20 max-h-[calc(100vh-4rem)] overflow-y-auto"
+            className="md:hidden backdrop-blur-md border-t max-h-[calc(100vh-4rem)] overflow-y-auto"
+            style={{ background: 'rgba(10, 22, 40, 0.98)', borderColor: 'rgba(59, 130, 246, 0.2)' }}
           >
             <div className="px-4 py-4 pb-6 space-y-2">
               {!user && (
                 <>
                   <Link
                     to="/"
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
                       isActive('/')
-                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                        : 'text-gray-300 hover:text-white hover:bg-cyan-950/50'
+                        ? 'bg-blue-600/25 text-blue-300 border border-blue-500/35 font-bold'
+                        : 'text-blue-100 hover:text-white hover:bg-blue-900/40'
                     }`}
                     onClick={() => setIsOpen(false)}
                   >
-                    <Home className="w-4 h-4" />
+                    <Home className="w-4 h-4 text-blue-400" />
                     <span>Home</span>
                   </Link>
                   <Link
                     to="/contact"
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
                       isActive('/contact')
-                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                        : 'text-gray-300 hover:text-white hover:bg-cyan-950/50'
+                        ? 'bg-blue-600/25 text-blue-300 border border-blue-500/35 font-bold'
+                        : 'text-blue-100 hover:text-white hover:bg-blue-900/40'
                     }`}
                     onClick={() => setIsOpen(false)}
                   >
-                    <Mail className="w-4 h-4" />
+                    <Mail className="w-4 h-4 text-blue-400" />
                     <span>Contact Us</span>
                   </Link>
                 </>
               )}
 
               {filteredNavItems.map((item) => {
-
                 const Icon = item.icon;
-
-                // For protected routes when user is not logged in, redirect to login
-                if (item.protected && !user) {
-                  return (
-                    <Link
-                      key={item.name}
-                      to="/login"
-                      className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 text-gray-300 hover:text-white hover:bg-teal-900/30"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span>{item.name}</span>
-                    </Link>
-                  );
-                }
-
                 return (
                   <Link
                     key={item.name}
                     to={item.path}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${isActive(item.path)
-                      ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                      : 'text-gray-300 hover:text-white hover:bg-teal-900/30'
-                      }`}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all ${
+                      isActive(item.path)
+                        ? 'bg-blue-600/25 text-blue-300 border border-blue-500/35 font-bold'
+                        : 'text-blue-100 hover:text-white hover:bg-blue-900/40'
+                    }`}
                     onClick={() => setIsOpen(false)}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-4 h-4 text-blue-400" />
                     <span>{item.name}</span>
                   </Link>
                 );
@@ -372,17 +328,17 @@ const Navbar = () => {
 
               {user && user.role === 'admin' && (
                 <>
-                  <div className="border-t border-teal-500/20 my-2"></div>
+                  <div className="border-t border-blue-500/20 my-2"></div>
                   {adminItems.map((item) => {
                     const Icon = item.icon;
                     return (
                       <Link
                         key={item.name}
                         to={item.path}
-                        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-teal-900/30 transition-all duration-200"
+                        className="flex items-center space-x-2 px-3 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-blue-900/40 transition-all"
                         onClick={() => setIsOpen(false)}
                       >
-                        <Icon className="w-4 h-4" />
+                        <Icon className="w-4 h-4 text-blue-400" />
                         <span>{item.name}</span>
                       </Link>
                     );
@@ -392,13 +348,13 @@ const Navbar = () => {
 
               {user ? (
                 <>
-                  <div className="border-t border-teal-500/20 my-2"></div>
+                  <div className="border-t border-blue-500/20 my-2"></div>
                   <Link
                     to="/profile"
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-teal-900/30 transition-all duration-200"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-blue-900/40 transition-all"
                     onClick={() => setIsOpen(false)}
                   >
-                    <User className="w-4 h-4" />
+                    <User className="w-4 h-4 text-blue-400" />
                     <span>Profile</span>
                   </Link>
                   <button
@@ -406,7 +362,7 @@ const Navbar = () => {
                       handleLogout();
                       setIsOpen(false);
                     }}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 w-full"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all w-full"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Logout</span>
@@ -414,12 +370,13 @@ const Navbar = () => {
                 </>
               ) : (
                 <>
-                  <div className="border-t border-teal-500/20 my-2"></div>
+                  <div className="border-t border-blue-500/20 my-2"></div>
                   <Link
                     to="/login"
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-teal-900/30 transition-all duration-200"
+                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-blue-100 hover:text-white hover:bg-blue-900/40 transition-all"
                     onClick={() => setIsOpen(false)}
                   >
+                    <LogIn className="w-4 h-4 text-blue-400" />
                     <span>Login</span>
                   </Link>
                   <button
@@ -427,9 +384,9 @@ const Navbar = () => {
                       handleJoinNow();
                       setIsOpen(false);
                     }}
-                    className="flex items-center justify-center space-x-2 px-3 py-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-medium hover:from-emerald-500 hover:to-teal-400 transition-all duration-200 w-full"
+                    className="flex items-center justify-center space-x-2 px-3 py-3 rounded-xl text-white font-bold transition-all w-full shadow-lg"
+                    style={{ background: 'linear-gradient(135deg, #1d4ed8, #2563eb)' }}
                   >
-
                     <span>Request a refund</span>
                   </button>
                 </>
@@ -438,7 +395,6 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
     </nav>
   );
 };

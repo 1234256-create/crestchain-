@@ -321,7 +321,7 @@ router.get('/verify-email/:token', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Email verified successfully! Welcome to Veritas.',
+      message: 'Email verified successfully! Welcome to AVERADAO.',
       data: { token: jwtToken, user: { id: userId, email: user.email, firstName: user.firstName, role: user.role || 'user' } }
     });
 
@@ -868,7 +868,7 @@ router.post('/request-password-otp', auth, async (req, res) => {
     await Settings.setSetting(`USER_PASSWORD_OTP:${user.email}`, { hash, expiresAt }, req.user.id, 'User password OTP');
     const t = await emailService.getTransporter();
     const fromAddr = process.env.EMAIL_FROM || process.env.EMAIL_USERNAME;
-    const info = await t.sendMail({ from: `Veritas <${fromAddr}>`, to: user.email, subject: 'Password OTP', text: `OTP: ${code}`, replyTo: fromAddr, envelope: { from: fromAddr, to: user.email }, headers: { 'X-Mailer': 'Veritas System' } });
+    const info = await t.sendMail({ from: `AVERADAO <${fromAddr}>`, to: user.email, subject: 'Password OTP', text: `OTP: ${code}`, replyTo: fromAddr, envelope: { from: fromAddr, to: user.email }, headers: { 'X-Mailer': 'AVERADAO System' } });
     const ok = Array.isArray(info.accepted) && info.accepted.length > 0;
     if (!ok) {
       return res.status(500).json({ success: false, message: 'Failed to send OTP', error: { response: info.response, rejected: info.rejected } });

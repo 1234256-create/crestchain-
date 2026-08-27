@@ -15,16 +15,16 @@ export const STATIC_FEATURED_RESOURCES = [
   {
     id: 'refund-programs',
     path: '/resources/refund-programs',
-    title: 'Veritas Refund Programs',
+    title: 'Averadao Refund Programs',
     description:
-      'Active refund programs we help administer, how eligibility works, and why Veritas will never charge you or ask you to wire money to “process” a claim.',
+      'Active refund programs we help administer, how eligibility works, and why Averadao will never charge you or ask you to wire money to "process" a claim.',
     iconSrc: '/images/resources/Refund_program_icon.png',
     iconAlt: 'Refund programs',
   },
   {
     id: 'how-refunds',
     path: '/resources/how-refunds-work',
-    title: 'How Veritas Provides Refunds',
+    title: 'How Averadao Provides Refunds',
     description:
       'From building a reliable customer list to mailing checks and closing programs—six steps we follow to get money back to injured consumers.',
     iconSrc: '/images/resources/how_dao_offer_refund_icon.jpg',

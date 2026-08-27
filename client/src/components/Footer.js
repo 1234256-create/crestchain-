@@ -48,7 +48,7 @@ const Footer = () => {
           <TrustpilotSection />
         </>
       )}
-      <footer className="bg-[#02141a]/95 text-white border-t border-cyan-500/20 mt-auto">
+      <footer className="text-white border-t mt-auto" style={{background:'rgba(10,22,40,0.97)',borderColor:'rgba(59,130,246,0.15)'}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 md:gap-8 items-start">
             {/* Platform */}
@@ -129,12 +129,12 @@ const Footer = () => {
               <h3 className="text-white font-semibold text-sm tracking-wide">Contact</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link to="/contact" onClick={() => window.scrollTo(0, 0)} className="text-cyan-400 font-semibold hover:text-cyan-300 transition-colors duration-200 text-xs sm:text-sm block">
+                  <Link to="/contact" onClick={() => window.scrollTo(0, 0)} className="text-blue-400 font-semibold hover:text-blue-300 transition-colors duration-200 text-xs sm:text-sm block">
                     ✉️ Contact Us Form
                   </Link>
                 </li>
                 <li>
-                  <a href="mailto:support@veritasaid.com" className="text-sky-100 hover:text-white transition-colors duration-200 text-xs sm:text-sm block break-all">
+                  <a href="mailto:support@veritasaid.com" className="text-blue-100/90 hover:text-white transition-colors duration-200 text-xs sm:text-sm block break-all">
                     support@veritasaid.com
                   </a>
                 </li>
@@ -158,13 +158,13 @@ const Footer = () => {
               <div className="space-y-2">
                 {companyAddress && (
                   <div className="text-gray-400 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
-                    <span className="text-xs font-semibold text-emerald-400 block mb-0.5">Administrative Office:</span>
+                    <span className="text-xs font-semibold text-blue-400 block mb-0.5">Administrative Office:</span>
                     {companyAddress}
                   </div>
                 )}
                 {companyAddress2 && (
-                  <div className="text-gray-400 text-xs sm:text-sm leading-relaxed whitespace-pre-line pt-1.5 border-t border-cyan-500/10">
-                    <span className="text-xs font-semibold text-sky-400 block mb-0.5">Registered Office:</span>
+                  <div className="text-gray-400 text-xs sm:text-sm leading-relaxed whitespace-pre-line pt-1.5 border-t border-blue-500/15">
+                    <span className="text-xs font-semibold text-blue-300 block mb-0.5">Registered Office:</span>
                     {companyAddress2}
                   </div>
                 )}
@@ -172,9 +172,9 @@ const Footer = () => {
             </div>
           </div>
 
-          <div className="border-t border-cyan-500/10 mt-8 pt-4">
+          <div className="border-t border-blue-500/15 mt-8 pt-4">
             <div className="flex flex-col sm:flex-row justify-between items-center text-xs text-gray-400 gap-2">
-              <p>© {new Date().getFullYear()} Veritas. All rights reserved.</p>
+              <p>© {new Date().getFullYear()} Averadao. All rights reserved.</p>
               <p>Decentralized Recovery Protocol</p>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Trophy,
@@ -415,27 +415,27 @@ const Dashboard = () => {
                 key={vote._id || vote.id || Math.random()}
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="bg-[#031d24]/90 rounded-xl shadow-lg border-l-4 border-cyan-500 overflow-hidden flex flex-col md:flex-row items-center justify-between p-4 border border-cyan-500/20 shadow-cyan-950/40"
+                className="bg-[#031d24]/90 rounded-xl shadow-lg border-l-4 border-blue-500 overflow-hidden flex flex-col md:flex-row items-center justify-between p-4 border border-blue-500/20 shadow-blue-950/40"
               >
                 <div className="flex items-center gap-4 mb-4 md:mb-0 w-full md:w-auto">
-                  <div className="p-3 bg-cyan-950/60 text-cyan-300 rounded-full shrink-0 border border-cyan-500/30">
+                  <div className="p-3 bg-blue-950/60 text-sky-300 rounded-full shrink-0 border border-blue-500/30">
                     <Vote className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
                     <h4 className="text-lg font-bold text-white">{vote.title || 'New Vote Created!'}</h4>
-                    <p className="text-sm text-cyan-200/70">A new proposal needs your attention</p>
+                    <p className="text-sm text-sky-200/70">A new proposal needs your attention</p>
                   </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto justify-between">
                   <div className="text-sm flex flex-col gap-1 items-start md:items-end w-full sm:w-auto">
-                    <div className="flex items-center gap-2 text-cyan-200">
-                      <Clock className="w-4 h-4 text-cyan-400" />
+                    <div className="flex items-center gap-2 text-sky-200">
+                      <Clock className="w-4 h-4 text-blue-400" />
                       <span>Starts: {vote.startTime ? new Date(vote.startTime).toLocaleString() : 'Now'}</span>
                     </div>
                     {vote.endTime && (
-                      <div className="flex items-center gap-2 text-cyan-200">
-                        <Timer className="w-4 h-4 text-cyan-400" />
+                      <div className="flex items-center gap-2 text-sky-200">
+                        <Timer className="w-4 h-4 text-blue-400" />
                         <span>Ends: {new Date(vote.endTime).toLocaleString()}</span>
                         <span className="ml-2 font-mono font-bold text-red-400 bg-red-950/60 px-2 py-0.5 rounded-full border border-red-500/30">
                           <LiveTimer endTime={vote.endTime} />
@@ -446,7 +446,7 @@ const Dashboard = () => {
 
                   <button
                     onClick={() => navigate(`/voting?voteId=${vote._id || vote.id}`)}
-                    className="px-6 py-2 bg-gradient-to-r from-[#086a7e] to-[#0e7490] text-white rounded-lg hover:from-[#097d95] hover:to-[#0891b2] transition-all font-medium flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto shadow-md shadow-cyan-950/50"
+                    className="px-6 py-2 bg-gradient-to-r from-[#1e40af] to-[#1d4ed8] text-white rounded-lg hover:from-[#2563eb] hover:to-[#3b82f6] transition-all font-medium flex items-center justify-center gap-2 shrink-0 w-full sm:w-auto shadow-md shadow-blue-950/50"
                   >
                     Vote Now <Vote className="w-4 h-4" />
                   </button>
@@ -467,12 +467,12 @@ const Dashboard = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             onClick={() => navigate('/voting')}
-            className="mobile-glass rounded-xl mobile-card hover:bg-cyan-950/40 border border-cyan-500/20 transition-all duration-300 group touch-target"
+            className="mobile-glass rounded-xl mobile-card hover:bg-blue-950/40 border border-blue-500/20 transition-all duration-300 group touch-target"
           >
             <div className="flex flex-col sm:flex-row items-center justify-between">
               <div className="flex items-center mb-4 sm:mb-0">
-                <div className="p-3 sm:p-4 bg-cyan-500/20 border border-cyan-500/30 rounded-lg mr-4 shadow-sm shadow-cyan-500/20">
-                  <Vote className="w-6 h-6 sm:w-8 sm:h-8 text-cyan-300" />
+                <div className="p-3 sm:p-4 bg-blue-500/20 border border-blue-500/30 rounded-lg mr-4 shadow-sm shadow-blue-500/20">
+                  <Vote className="w-6 h-6 sm:w-8 sm:h-8 text-sky-300" />
                 </div>
                 <div className="text-left">
                   <h3 className="text-lg sm:text-xl font-bold text-white">VOTE</h3>
@@ -480,7 +480,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="text-center sm:text-right">
-                <div className="text-cyan-300 font-semibold text-sm sm:text-base">
+                <div className="text-sky-300 font-semibold text-sm sm:text-base">
                   Active rounds: {activeRoundsCount}
                 </div>
                 <p className="text-gray-400 text-xs sm:text-sm">Voting status</p>
@@ -571,14 +571,14 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-lg p-4">
+            <div className="bg-blue-950/40 border border-blue-500/30 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-white font-semibold text-sm sm:text-base">Referral Points</h4>
-                <Users className="w-5 h-5 text-emerald-400" />
+                <Users className="w-5 h-5 text-blue-400" />
               </div>
               <div className="space-y-1">
-                <div className="text-3xl font-bold text-emerald-400">{pointsReferral.toLocaleString()}</div>
-                <p className="text-emerald-200/70 text-xs">Real points from invited users (+10 each)</p>
+                <div className="text-3xl font-bold text-blue-400">{pointsReferral.toLocaleString()}</div>
+                <p className="text-blue-200/70 text-xs">Real points from invited users (+10 each)</p>
               </div>
             </div>
           </div>

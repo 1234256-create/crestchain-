@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -43,7 +43,7 @@ const VisibilityToggle = ({ active, onToggle, disabled }) => (
     disabled={disabled}
     onClick={onToggle}
     className={`relative h-7 w-11 shrink-0 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:opacity-50 ${
-      active ? 'bg-emerald-500' : 'bg-slate-300'
+      active ? 'bg-blue-500' : 'bg-slate-300'
     }`}
   >
     <span
@@ -592,7 +592,7 @@ const ArticlesManagement = () => {
                     <div>
                       <span className="text-sm font-semibold text-slate-900">Visible on website</span>
                       <p className="text-xs text-slate-500">
-                        <span className="font-medium text-emerald-700">On</span> = live on the site ·{' '}
+                        <span className="font-medium text-blue-700">On</span> = live on the site ·{' '}
                         <span className="font-medium text-slate-600">Off</span> = hidden
                       </p>
                     </div>

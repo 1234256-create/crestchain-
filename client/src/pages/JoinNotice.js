@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield } from 'lucide-react';
@@ -24,21 +24,21 @@ const JoinNotice = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#085464] via-[#05323c] to-[#02141a]">
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0a1628]">
       <div className="max-w-4xl mx-auto px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#031d24]/80 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-cyan-500/20 text-white shadow-2xl shadow-cyan-950/60"
+          className="bg-[#031d24]/80 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-blue-500/20 text-white shadow-2xl shadow-blue-950/60"
         >
           <div className="flex items-center gap-3 mb-6">
-            <Shield className="w-8 h-8 text-cyan-400" />
+            <Shield className="w-8 h-8 text-blue-400" />
             <h1 className="text-2xl sm:text-3xl font-bold">Important Notice</h1>
           </div>
 
           <div className="space-y-4 text-gray-200 text-sm sm:text-base leading-relaxed">
             <p>
-              Please read carefully before proceeding. Veritas helps eligible fraud victims access refund allocations through structured verification.
+              Please read carefully before proceeding. AVERADAO helps eligible fraud victims access refund allocations through structured verification.
             </p>
             <p>
               To process your request accurately, you will need to provide basic incident details, your contact email, and documentation or transaction hashes related to your loss.
@@ -68,7 +68,7 @@ const JoinNotice = () => {
             <button
               type="button"
               onClick={handleNext}
-              className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#086a7e] to-[#0e7490] text-white font-semibold hover:from-[#097d95] hover:to-[#0891b2] shadow-md shadow-cyan-950/50 transition"
+              className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#1e40af] to-[#1d4ed8] text-white font-semibold hover:from-[#2563eb] hover:to-[#3b82f6] shadow-md shadow-blue-950/50 transition"
             >
               Next
             </button>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { ShieldAlert, AlertTriangle, ChevronRight, Search } from 'lucide-react';
@@ -71,7 +71,7 @@ const ScamAlertsResourcePage = () => {
           <div className="flex items-center gap-3 shrink-0">
             <Link
               to={joinNoticeHref()}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#0284c7] to-[#38bdf8] px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-cyan-900/20 transition hover:brightness-110"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#0284c7] to-[#38bdf8] px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-900/20 transition hover:brightness-110"
             >
               Submit claim
               <ChevronRight size={16} />
@@ -100,7 +100,7 @@ const ScamAlertsResourcePage = () => {
                     <ShieldAlert className="w-5 h-5 text-[#0284c7]" />
                     {section.title}
                   </h2>
-                  <span className="text-xs font-bold text-[#0284c7] bg-cyan-50 border border-cyan-200/80 px-3 py-1 rounded-full">
+                  <span className="text-xs font-bold text-[#0284c7] bg-sky-50 border border-sky-200/80 px-3 py-1 rounded-full">
                     {section.items.length} reported
                   </span>
                 </div>
@@ -109,7 +109,7 @@ const ScamAlertsResourcePage = () => {
                   {section.items.map((name) => (
                     <div
                       key={name}
-                      className="rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-cyan-50/40 hover:border-cyan-200/80 px-4 py-3 text-sm font-semibold text-slate-800 transition-all flex items-center justify-between group"
+                      className="rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-sky-50/40 hover:border-sky-200/80 px-4 py-3 text-sm font-semibold text-slate-800 transition-all flex items-center justify-between group"
                     >
                       <span className="truncate pr-2">{name}</span>
                       <span className="h-2 w-2 rounded-full bg-red-500 shrink-0 opacity-75 group-hover:opacity-100 transition-opacity" title="Reported Fraud" />

@@ -4,7 +4,7 @@ import { howRefundsSections } from '../../data/howRefundsContent';
 
 const HowRefundsResourcePage = () => (
   <ResourcePageLayout
-    title="How Veritas Provides Refunds"
+    title="How AVERADAO Provides Refunds"
     iconSrc="/images/resources/how_dao_offer_refund_icon.jpg"
     iconAlt="How refunds work"
   >

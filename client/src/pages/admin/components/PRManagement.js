@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link2, MapPin, MessageSquare, Plus, Trash2, Edit3, Save, ExternalLink, Eye, EyeOff, RefreshCw, Image } from 'lucide-react';
 import axios from 'axios';
@@ -233,14 +233,14 @@ const PRManagement = () => {
   return (
     <div className="space-y-8 max-w-6xl mx-auto py-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#00A4E4] to-[#38bdf8] rounded-2xl p-6 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-[#3b82f6] to-[#38bdf8] rounded-2xl p-6 text-white shadow-lg">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-white/10 rounded-xl">
             <Link2 className="w-8 h-8 text-white" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">Site & PR Media Settings</h1>
-            <p className="text-cyan-100 text-sm">Manage WhatsApp Support Link, Official Address, and Live PR Coverage Links with Logos</p>
+            <p className="text-sky-100 text-sm">Manage WhatsApp Support Link, Official Address, and Live PR Coverage Links with Logos</p>
           </div>
         </div>
       </div>
@@ -259,7 +259,7 @@ const PRManagement = () => {
               type="text"
               value={whatsappLink}
               onChange={(e) => setWhatsappLink(e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00A4E4] outline-none text-sm"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3b82f6] outline-none text-sm"
               placeholder="https://wa.me/message/..."
             />
           </div>
@@ -271,7 +271,7 @@ const PRManagement = () => {
             <button
               onClick={saveWhatsappSetting}
               disabled={savingWhatsapp}
-              className="px-4 py-2 bg-gradient-to-r from-[#00A4E4] to-[#38bdf8] text-white font-semibold text-xs rounded-xl shadow hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4 py-2 bg-gradient-to-r from-[#3b82f6] to-[#38bdf8] text-white font-semibold text-xs rounded-xl shadow hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5"
             >
               {savingWhatsapp ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
               Save Link
@@ -283,10 +283,10 @@ const PRManagement = () => {
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white rounded-2xl p-6 shadow-md border border-gray-100 space-y-4">
           <div className="flex items-center justify-between border-b pb-3">
             <div className="flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-[#00A4E4]" />
+              <MapPin className="w-5 h-5 text-[#3b82f6]" />
               <h2 className="text-lg font-bold text-gray-900">Company Addresses (Administrative & Registered)</h2>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 bg-cyan-50 text-cyan-700 border border-cyan-200 rounded-full">
+            <span className="text-xs font-semibold px-2.5 py-1 bg-sky-50 text-blue-700 border border-sky-200 rounded-full">
               Multi-Office Supported
             </span>
           </div>
@@ -295,14 +295,14 @@ const PRManagement = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center gap-1.5">
-                <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded text-[10px]">Office 1</span>
+                <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded text-[10px]">Office 1</span>
                 Administrative Office Address
               </label>
               <textarea
                 rows={3}
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00A4E4] outline-none text-sm font-medium"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3b82f6] outline-none text-sm font-medium"
                 placeholder="e.g. 12 N 2nd Street STE 100, Richmond, KY 40475"
               />
             </div>
@@ -315,7 +315,7 @@ const PRManagement = () => {
                 rows={3}
                 value={companyAddress2}
                 onChange={(e) => setCompanyAddress2(e.target.value)}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#00A4E4] outline-none text-sm font-medium"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#3b82f6] outline-none text-sm font-medium"
                 placeholder="e.g. 100 Wall Street, Suite 500, New York, NY 10005 (Optional)"
               />
             </div>
@@ -325,7 +325,7 @@ const PRManagement = () => {
             <button
               onClick={saveAddressSetting}
               disabled={savingAddress}
-              className="px-4 py-2.5 bg-gradient-to-r from-[#00A4E4] to-[#38bdf8] text-white font-bold text-xs rounded-xl shadow hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4 py-2.5 bg-gradient-to-r from-[#3b82f6] to-[#38bdf8] text-white font-bold text-xs rounded-xl shadow hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5"
             >
               {savingAddress ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
               Save Addresses
@@ -340,7 +340,7 @@ const PRManagement = () => {
               <span className="text-[#00b67a] text-xl">★</span>
               <h2 className="text-lg font-bold text-gray-900">Trustpilot Rating Section Settings</h2>
             </div>
-            <span className="text-xs font-bold px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full">
+            <span className="text-xs font-bold px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full">
               Live Homepage Section
             </span>
           </div>
@@ -353,7 +353,7 @@ const PRManagement = () => {
                 type="text"
                 value={trustpilotData.title}
                 onChange={(e) => setTrustpilotData({ ...trustpilotData, title: e.target.value })}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-medium"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
                 placeholder="e.g. GOOD"
               />
             </div>
@@ -362,7 +362,7 @@ const PRManagement = () => {
               <select
                 value={trustpilotData.starRating || '4.5'}
                 onChange={(e) => setTrustpilotData({ ...trustpilotData, starRating: e.target.value })}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-semibold text-emerald-700"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold text-blue-700"
               >
                 <option value="5.0">★★★★★ 5.0 Stars (5 Full Green Stars)</option>
                 <option value="4.5">★★★★½ 4.5 Stars (4 Full Stars + 1 Half Star)</option>
@@ -383,7 +383,7 @@ const PRManagement = () => {
                 type="text"
                 value={trustpilotData.reviewCount}
                 onChange={(e) => setTrustpilotData({ ...trustpilotData, reviewCount: e.target.value })}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-medium"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
                 placeholder="e.g. 880 reviews"
               />
             </div>
@@ -395,7 +395,7 @@ const PRManagement = () => {
               type="text"
               value={trustpilotData.subheading}
               onChange={(e) => setTrustpilotData({ ...trustpilotData, subheading: e.target.value })}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-medium"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
               placeholder="e.g. We’ve helped over 10,000+ fraud victims already!"
             />
           </div>
@@ -406,7 +406,7 @@ const PRManagement = () => {
               type="url"
               value={trustpilotData.reviewLink}
               onChange={(e) => setTrustpilotData({ ...trustpilotData, reviewLink: e.target.value })}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-medium"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
               placeholder="https://www.trustpilot.com/review/..."
             />
           </div>
@@ -417,7 +417,7 @@ const PRManagement = () => {
               type="text"
               value={trustpilotData.buttonText}
               onChange={(e) => setTrustpilotData({ ...trustpilotData, buttonText: e.target.value })}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-medium"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
               placeholder="Are you a victim? Request a refund →"
             />
           </div>
@@ -426,7 +426,7 @@ const PRManagement = () => {
             <button
               onClick={saveTrustpilotSetting}
               disabled={savingTrustpilot}
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
             >
               {savingTrustpilot ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
               Save Trustpilot Settings
@@ -440,14 +440,14 @@ const PRManagement = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Image className="w-6 h-6 text-[#059669]" />
+              <Image className="w-6 h-6 text-[#2563eb]" />
               PR & Media Coverage Links
             </h2>
             <p className="text-xs text-gray-500 mt-1">Manage press release (PR) links and site logos displayed on the live website.</p>
           </div>
           <button
             onClick={handleOpenAddModal}
-            className="px-4 py-2 bg-gradient-to-r from-[#085464] to-[#059669] text-white font-semibold text-xs rounded-xl shadow hover:opacity-90 flex items-center justify-center gap-1.5 self-start sm:self-auto"
+            className="px-4 py-2 bg-gradient-to-r from-[#0f172a] to-[#2563eb] text-white font-semibold text-xs rounded-xl shadow hover:opacity-90 flex items-center justify-center gap-1.5 self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
             Add New PR Link
@@ -481,7 +481,7 @@ const PRManagement = () => {
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-900 text-sm leading-tight">{item.title}</h3>
-                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-600 hover:underline flex items-center gap-1 mt-0.5 max-w-[180px] truncate">
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-0.5 max-w-[180px] truncate">
                         <span className="truncate">{item.url}</span>
                         <ExternalLink className="w-3 h-3 shrink-0" />
                       </a>
@@ -535,7 +535,7 @@ const PRManagement = () => {
               exit={{ scale: 0.95, opacity: 0 }}
               className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden"
             >
-              <div className="bg-gradient-to-r from-[#085464] to-[#059669] p-5 text-white flex items-center justify-between">
+              <div className="bg-gradient-to-r from-[#0f172a] to-[#2563eb] p-5 text-white flex items-center justify-between">
                 <h3 className="font-bold text-lg">{editingId ? 'Edit PR Link & Logo' : 'Add New PR Link & Logo'}</h3>
                 <button onClick={() => setIsModalOpen(false)} className="text-white/80 hover:text-white text-xl">✕</button>
               </div>
@@ -558,7 +558,7 @@ const PRManagement = () => {
                     type="url"
                     value={modalUrl}
                     onChange={(e) => setModalUrl(e.target.value)}
-                    placeholder="e.g. https://finance.yahoo.com/news/veritas-announces-..."
+                    placeholder="e.g. https://finance.yahoo.com/news/averadao-announces-..."
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#10b981] outline-none text-sm"
                   />
                 </div>
@@ -587,7 +587,7 @@ const PRManagement = () => {
                           if (!modalTitle) setModalTitle(preset.name);
                         }}
                         className={`p-2 rounded-xl border text-center flex flex-col items-center gap-1 transition-all ${
-                          modalLogoUrl === preset.url ? 'border-emerald-500 bg-emerald-50 shadow-sm ring-2 ring-emerald-400' : 'border-gray-200 hover:bg-gray-50'
+                          modalLogoUrl === preset.url ? 'border-blue-500 bg-blue-50 shadow-sm ring-2 ring-blue-400' : 'border-gray-200 hover:bg-gray-50'
                         }`}
                       >
                         <img src={preset.url} alt={preset.name} className="w-8 h-8 object-contain" />
@@ -603,7 +603,7 @@ const PRManagement = () => {
                     id="modalActiveToggle"
                     checked={modalActive}
                     onChange={(e) => setModalActive(e.target.checked)}
-                    className="w-4 h-4 text-[#059669] border-gray-300 rounded focus:ring-[#10b981]"
+                    className="w-4 h-4 text-[#2563eb] border-gray-300 rounded focus:ring-[#10b981]"
                   />
                   <label htmlFor="modalActiveToggle" className="text-xs text-gray-700 font-medium cursor-pointer">
                     Show on live website (Active)
@@ -622,7 +622,7 @@ const PRManagement = () => {
                 <button
                   type="button"
                   onClick={handleSaveModal}
-                  className="px-5 py-2 bg-gradient-to-r from-[#085464] to-[#059669] text-white font-semibold text-xs rounded-xl shadow hover:opacity-90"
+                  className="px-5 py-2 bg-gradient-to-r from-[#0f172a] to-[#2563eb] text-white font-semibold text-xs rounded-xl shadow hover:opacity-90"
                 >
                   Save PR Link
                 </button>
