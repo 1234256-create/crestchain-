@@ -2,20 +2,19 @@ const nodemailer = require('nodemailer');
 
 let cachedTransporter = null;
 
-// Creates a fresh (non-pooled) transporter for a single send.
-// Non-pooled avoids ETIMEDOUT from stale pool connections when many emails are sent.
+// Creates a fresh transporter if credentials exist, otherwise null
 const createFreshTransporter = () => {
-  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST || process.env['SMTP-Host'] || 'smtp.hostinger.com';
-  const username = process.env.SMTP_USER || process.env.EMAIL_USERNAME || process.env['SMTP-Username'] || process.env.SMTP_USERNAME || 'support@veritasaid.com';
-  const password = process.env.SMTP_PASSWORD || process.env.EMAIL_PASSWORD || process.env['SMTP-PASSWORD'];
+  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+  const username = process.env.SMTP_USER || process.env.EMAIL_USERNAME;
+  const password = process.env.SMTP_PASSWORD || process.env.EMAIL_PASSWORD;
 
   if (!host || !username || !password) {
-    throw new Error('SMTP environment variables not configured');
+    return null;
   }
 
-  const rawPort = process.env.SMTP_PORT || process.env.EMAIL_PORT || process.env['SMTP-Port'] || '465';
+  const rawPort = process.env.SMTP_PORT || process.env.EMAIL_PORT || '587';
   const port = parseInt(rawPort, 10);
-  const secure = port === 465 || (process.env.SMTP_SECURE || process.env.EMAIL_SECURE || '').toLowerCase() !== 'false';
+  const secure = port === 465 || (process.env.SMTP_SECURE || process.env.EMAIL_SECURE || '').toLowerCase() === 'true';
 
   return nodemailer.createTransport({
     host,
@@ -31,44 +30,29 @@ const createFreshTransporter = () => {
 
 // Kept for compatibility with code importing getTransporter directly
 const getTransporter = async () => {
-  const host = process.env.EMAIL_HOST || process.env['SMTP-Host'] || process.env.SMTP_HOST;
-  const username = process.env.EMAIL_USERNAME || process.env['SMTP-Username'] || process.env.SMTP_USERNAME;
-  const password = process.env.EMAIL_PASSWORD || process.env['SMTP-PASSWORD'] || process.env.SMTP_PASSWORD;
-
-  if (host && username && password) {
-    return createFreshTransporter();
-  }
-
-  if (process.env.NODE_ENV !== 'production') {
-    try {
-      console.log('Falling back to Ethereal Email');
-      const account = await nodemailer.createTestAccount();
-      return nodemailer.createTransport({
-        host: 'smtp.ethereal.email', port: 587,
-        auth: { user: account.user, pass: account.pass }
-      });
-    } catch (e) {
-      console.warn('Ethereal setup bypassed, using jsonTransport fallback:', e.message);
-      return nodemailer.createTransport({ jsonTransport: true });
-    }
-  }
-
+  const transporter = createFreshTransporter();
+  if (transporter) return transporter;
   return nodemailer.createTransport({ jsonTransport: true });
 };
 
 const sendEmail = async (options, attempt = 1) => {
   const start = Date.now();
-  // Always use a fresh transporter per send to avoid stale-pool ETIMEDOUT errors
   const transporter = createFreshTransporter();
-  const fromAddr = process.env.EMAIL_FROM || process.env.EMAIL_USERNAME || 'support@veritasaid.com';
+  const fromAddr = process.env.EMAIL_FROM || process.env.EMAIL_USERNAME || 'noreply@averadao.com';
+
+  if (!transporter) {
+    console.log(`[Averadao Notification] Email not sent: SMTP credentials for Averadao are not configured in server/.env. Target: ${options.email}, Subject: "${options.subject}"`);
+    return { messageId: `averadao-simulated-${Date.now()}`, response: '250 Simulated: No SMTP configured for Averadao' };
+  }
+
   const mailOptions = {
-    from: `"AVERADAO Support" <${fromAddr}>`,
+    from: `"Averadao Support" <${fromAddr}>`,
     to: options.email,
     subject: options.subject,
     text: options.message,
     html: options.html || undefined,
     replyTo: options.replyTo || fromAddr,
-    headers: { 'X-Mailer': 'AVERADAO-Mailer' },
+    headers: { 'X-Mailer': 'Averadao-Mailer' },
   };
 
   try {

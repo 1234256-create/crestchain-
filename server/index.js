@@ -97,18 +97,18 @@ app.use('/documents', express.static(path.join(__dirname, '../documents')));
 mongoose.set('bufferCommands', false);
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/doa-voting', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/averadao-db', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 2000,
   connectTimeoutMS: 2000
 })
   .then(() => {
-    console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB (Averadao Database)');
     const seedAdminAndUser = async () => {
       try {
-        const email = process.env.ADMIN_EMAIL || 'support@veritasaid.com';
-        const password = process.env.ADMIN_PASSWORD || 'AdminPassword123!';
+        const email = process.env.ADMIN_EMAIL || 'admin@averadao.com';
+        const password = process.env.ADMIN_PASSWORD || 'ADMIN1234';
         if (email && password) {
           const bcrypt = require('bcryptjs');
           let admin = await User.findOne({ email }).select('+password');
