@@ -5,11 +5,11 @@
   "main": "server/index.js",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "cd server && npm run dev",
-    "client": "cd client && npm start",
-    "build": "cd client && npm run build",
-    "install-deps": "npm install && cd server && npm install && cd ../client && npm install",
-    "start": "cd server && npm start"
+    "server": "npm run dev --prefix server",
+    "client": "npm start --prefix client",
+    "build": "npm run build --prefix client",
+    "install-deps": "npm install && npm install --prefix server && npm install --prefix client",
+    "start": "npm start --prefix server"
   },
   "keywords": ["voting", "contribution", "react", "node", "express", "mongodb"],
   "author": "DOA Team",
